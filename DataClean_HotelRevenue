@@ -1,0 +1,88 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Feb  2 09:44:40 2025
+
+@author: Qian Su
+"""
+import pandas as pd
+
+#Conbine the information of 5 hotels into one file
+##Those csv files can be downloaded in the main menue of WebProject
+# List of your CSV file names
+csv_files = ['Hotel1.csv', 'Hotel2.csv', 'Hotel3.csv', 'Hotel4.csv', 'Hotel5.csv']
+
+# Read each CSV file into a DataFrame and store them in a list
+dataframes = [pd.read_csv(file) for file in csv_files]
+
+# Concatenate all DataFrames into one
+combined_df = pd.concat(dataframes, ignore_index=True)
+
+# Save the combined DataFrame to a new CSV file
+combined_df.to_csv('HOTEL.csv', index=False)
+
+print("Files HOTEL successfully into HOTEL.csv")
+
+#EXPLORE AND CLEAN DATA
+# Set options to display all columns and rows
+pd.set_option('display.max_columns', None)  # Show all columns
+pd.set_option('display.max_rows', 30)  # Show up to 20 rows (you can adjust this as needed)
+
+# Print the DataFrame
+print(combined_df)
+print(combined_df.describe())
+
+#Remove Booking_ID， Product_ID，Check_In_Date, Check_Out_Date, Distribution_Channel, Party_Size, Purchased_Room_Type, Purchased_Rate_Code, Merge_Indicator, Arrival_Rate, Rate_Code, Rate_Description, Room_Type, Enrollment_Date, VIP_Enrollment_Date        
+#DROP OR ADD COLUMN/DATA
+drop_these = ["Booking_ID", "Product_ID", "Check_In_Date", "Check_Out_Date", "Distribution_Channel", "Party_Size", "Purchased_Room_Type", "Purchased_Rate_Code", "Merge_Indicator", "Arrival_Rate", "Rate_Code", "Rate_Description", "Room_Type", "Enrollment_Date", "VIP_Enrollment_Date"]
+combined_df.drop(drop_these, inplace=True, axis=1)
+## axis = 0 are the rows
+
+## Let's see what this did - 
+print(combined_df)
+
+#Check if the total revenue is correct and remove the incorrect rows
+
+mask = (combined_df['Length_of_Stay'] * combined_df['Number_of_Rooms'] * combined_df['Nightly_Rate']) == combined_df['Total_Revenue']
+
+# Filter the DataFrame to keep only rows where the condition is True
+combined_df = combined_df[mask]
+
+# Optionally, reset the index after filtering
+combined_df.reset_index(drop=True, inplace=True)
+
+# Print the first few rows to verify
+print(combined_df)
+
+#PLOT
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Plot a histogram with a KDE overlay for the 'Advance_Purchase' column
+sns.histplot(data=combined_df, x='Advance_Purchase', kde=True)
+
+plt.xlabel('Advance Purchase')
+plt.title('Distribution of Advance Purchase')
+plt.ylim(0, 10000)
+plt.show()
+
+#As the Weather forcast is a short-term data and there are a few people make advance purchase to 150 days.
+#Remove rows if the Advance_Purchase>150
+combined_df=combined_df[combined_df.Advance_Purchase > 0] 
+combined_df=combined_df[combined_df.Advance_Purchase < 150]  ##remove any rows with age > 120
+print(combined_df)
+print(combined_df.describe())
+
+## Run this to see Nightly_Rate outliers
+plot1=sns.boxplot(x="Nightly_Rate",data=combined_df)
+plt.show()
+
+## Next - run this to see outliers from another view.
+plot2=sns.swarmplot(x="Nightly_Rate",  data=combined_df, color=".25")
+plt.show()
+#Remove rows if the Nightly_Rate>1000
+combined_df=combined_df[combined_df.Nightly_Rate > 0] 
+combined_df=combined_df[combined_df.Nightly_Rate < 1000]  ##remove any rows with Nightly_Rate > 1000
+print(combined_df)
+print(combined_df.describe())
+
+combined_df.to_csv('HOTEL_Cleaned.csv', index=False)
