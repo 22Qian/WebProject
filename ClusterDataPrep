@@ -1,0 +1,66 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from retry_requests import retry
+import seaborn as sns
+
+path="D:/OM_PhD_CUBoulder/Classes/25S_MachineLearning/M2/Clustering/ClusteringData_Original.csv"
+DF=pd.read_csv(path)
+print(DF)
+OriginalDF=DF.copy()
+print(OriginalDF)
+columns = list(DF.columns)  # Store column names in a list
+print(columns)
+Pricecolumns_to_scale = ["Nightly_Rate"]
+DF[Pricecolumns_to_scale] = DF[Pricecolumns_to_scale] * 0.001
+##--------------------------------
+## Remove and save the label
+## Next, update the label so that 
+## rather than names like "Iris-setosa"
+## we use numbers instead. 
+## This will be necessary when we "color"
+## the data in our plot
+##---------------------------------------
+DFLabel1=DF["Distribution_Channel"]  ## Save the Label 
+print(DFLabel1)  ## print the labels
+print(type(DFLabel1))  ## check the datatype you have
+DFLabel_string=DFLabel1
+## Remap the label names from strongs to numbers
+MyDic={"CRO/Hotel":0, "GDS":1, "WEB":2}
+DFLabel1 = DFLabel1.map(MyDic)  ## Update the label to your number remap values
+print(DFLabel1) ## Print the labels to confirm 
+
+DFLabel2=DF["Purchased_Rate_Code"]  ## Save the Label 
+print(DFLabel2)  ## print the labels
+print(type(DFLabel2))  ## check the datatype you have
+DFLabel_string=DFLabel2
+## Remap the label names from strongs to numbers
+MyDic={"Rate 1":1, "Rate 2":2, "Rate 8":8}
+DFLabel2 = DFLabel2.map(MyDic)  ## Update the label to your number remap values
+print(DFLabel2) ## Print the labels to confirm how
+
+## Now, remove the label from the original dataframe
+DF = DF.drop(columns=["Distribution_Channel", "Purchased_Rate_Code"])
+
+print(DF) #Print the dataframe to confirm 
+print(columns)
+ 
+###-------------------------------------------
+### Standardize  dataset
+###-------------------------------------------
+# Assuming DF is a DataFrame
+scaler = StandardScaler()  # Instantiate scaler
+scaled_array = scaler.fit_transform(DF)  # Scale the data
+
+# Convert back to DataFrame and retain column names
+DF_scaled = pd.DataFrame(scaled_array, columns=DF.columns)
+
+print(DF_scaled)
+print(type(DF_scaled))  # Now it's a pandas DataFrame
+print(DF_scaled.shape)
+
+
+# Save cleaned data
+DF.to_csv('DF_Cleaned_clustering.csv', index=False)
