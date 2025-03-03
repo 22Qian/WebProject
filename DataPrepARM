@@ -1,0 +1,32 @@
+# Load necessary libraries
+library(data.table)
+library(arules)
+
+# Read the dataset
+transactions_data <- fread("hotel_orders_detailed.csv")
+
+# Remove Order_ID and Customer_ID since they are not needed for ARM
+transactions_data <- transactions_data[, !c("Order_ID", "Customer_ID"), with = FALSE]
+
+# Convert the dataset into a list of transactions
+transaction_list <- split(as.list(transactions_data), seq(nrow(transactions_data)))
+
+# Convert the list to a transaction format
+transaction_list <- lapply(transaction_list, function(x) {
+  unlist(x)  # Flatten list elements
+})
+
+# Remove NAs and ensure unique values in each transaction
+transaction_list <- lapply(transaction_list, function(x) {
+  as.character(unique(na.omit(x)))
+})
+
+# Convert to 'transactions' object
+transactions <- as(transaction_list, "transactions")
+
+# Save transactions as a .csv file (optional)
+write.transactions(transactions, file = "hotel_transactions.csv", format = "basket")
+
+# Inspect transactions
+inspect(transactions[1:5])  # View first 5 transactions
+summary(transactions)  # Summary of the transaction dataset
