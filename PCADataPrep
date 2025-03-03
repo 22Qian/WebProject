@@ -1,0 +1,84 @@
+## Imports
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from IPython.display import clear_output
+from mpl_toolkits.mplot3d import Axes3D
+from sklearn.cluster import KMeans
+from sklearn import datasets
+from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+
+
+path="D:/OM_PhD_CUBoulder/Classes/25S_MachineLearning/M2/PCA/Hotel1first150r.csv"
+DF=pd.read_csv(path)
+print(DF)
+OriginalDF=DF.copy()
+print(OriginalDF)
+columns = list(DF.columns)  # Store column names in a list
+print(columns)
+Pricecolumns_to_scale = ["Nightly_Rate"]
+DF[Pricecolumns_to_scale] = DF[Pricecolumns_to_scale] * 0.001
+##--------------------------------
+## Remove and save the label
+## Next, update the label so that 
+## rather than names like "Iris-setosa"
+## we use numbers instead. 
+## This will be necessary when we "color"
+## the data in our plot
+##---------------------------------------
+DFLabel1=DF["Distribution_Channel"]  ## Save the Label 
+print(DFLabel1)  ## print the labels
+print(type(DFLabel1))  ## check the datatype you have
+DFLabel_string=DFLabel1
+## Remap the label names from strongs to numbers
+MyDic={"CRO/Hotel":0, "GDS":1, "WEB":2}
+DFLabel1 = DFLabel1.map(MyDic)  ## Update the label to your number remap values
+print(DFLabel1) ## Print the labels to confirm 
+
+DFLabel2=DF["Purchased_Rate_Code"]  ## Save the Label 
+print(DFLabel2)  ## print the labels
+print(type(DFLabel2))  ## check the datatype you have
+DFLabel_string=DFLabel2
+## Remap the label names from strongs to numbers
+MyDic={"Rate 1":1, "Rate 2":2, "Rate 8":8}
+DFLabel2 = DFLabel2.map(MyDic)  ## Update the label to your number remap values
+print(DFLabel2) ## Print the labels to confirm how
+
+## Now, remove the label from the original dataframe
+DF = DF.drop(columns=["Distribution_Channel", "Purchased_Rate_Code"])
+
+print(DF) #Print the dataframe to confirm 
+
+###-------------------------------------------
+### Standardize your dataset
+###-------------------------------------------
+# Assuming DF is a DataFrame
+scaler = StandardScaler()  # Instantiate scaler
+scaled_array = scaler.fit_transform(DF)  # Scale the data
+
+# Convert back to DataFrame and retain column names
+DF_scaled = pd.DataFrame(scaled_array, columns=DF.columns)
+
+print(DF_scaled)
+print(type(DF_scaled))  # Now it's a pandas DataFrame
+print(DF_scaled.shape)
+
+# Plot histograms for all features
+plt.figure(figsize=(20, 20))
+for i, column in enumerate(DF_scaled.columns):  # Iterate over DataFrame columns
+    plt.subplot(5, 5, i + 1)
+    plt.hist(DF_scaled[column], bins=20, color='grey', alpha=0.7)
+    plt.title(column)
+    plt.xlabel("Value")
+    plt.ylabel("Frequency")
+    
+plt.tight_layout()
+plt.show()
+plt.savefig("histograms_features.png", dpi=300, bbox_inches='tight')  # Save as a high-resolution PNG
+
+
+
+DF_scaled.to_csv("Hotel1first150r_scaled.csv")
+print(columns)
