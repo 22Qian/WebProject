@@ -1,0 +1,397 @@
+"""
+Created on Thu Mar 13 13:34:10 2025
+
+@author: Martian
+"""
+import pandas as pd
+import statsmodels.api as sm
+import numpy as np
+# Load dataset
+file_path = "D:/OM_PhD_CUBoulder/Classes/25S_IndependentStudy/HW/Explore/Bodea - Choice based Revenue Management - Data Set - Hotel 1.csv"  # Update with your actual file path
+data = pd.read_csv(file_path)
+
+#Data Prepare
+#############Keep data with choice sets
+data = data[data['Merge_Indicator'] == 1]
+# Group data by Booking_ID and summarize the purchased room type
+a = data.groupby('Booking_ID').agg(n=('Product_ID', 'size'), 
+                                   purchased_room=('Purchased_Room_Type', 'first')).reset_index()
+
+# Display the frequency table for purchased room types
+print(a['purchased_room'].value_counts())
+print(len(a))
+
+# Summarize the price by different purchased room types
+b = data.groupby('Purchased_Room_Type').agg(mean_nightly_rate=('Nightly_Rate', 'mean'),
+                                             sd_nightly_rate=('Nightly_Rate', 'std')).reset_index()
+
+print(b)
+
+# Summarize the Arrival_Rate by different room types
+c = data.groupby('Room_Type').agg(mean_arrival_rate=('Arrival_Rate', 'mean'),
+                                   sd_arrival_rate=('Arrival_Rate', 'std')).reset_index()
+
+print(c)
+
+# Remove room types that are rarely purchased (those with <= 10 purchases)
+purchase_count = a['purchased_room'].value_counts()
+rare_room = purchase_count[purchase_count <= 10].index.tolist()
+print(rare_room)
+
+# Filter out rare room types (i.e., rare purchases)
+data_filtered = data[~data['Purchased_Room_Type'].isin(rare_room)]
+data_filtered = data_filtered[~data_filtered['Room_Type'].isin(rare_room)]
+
+
+# Summarize the newly filtered data by Booking_ID
+purchase_count_new = data_filtered.groupby('Booking_ID').agg(purchased_room=('Purchased_Room_Type', 'first')).reset_index()
+print(purchase_count_new)
+
+# Room types with more than 10 purchases
+room_type_sets = purchase_count_new['purchased_room'].value_counts().index.tolist()
+print(room_type_sets)
+
+
+
+# Step 1: Identify Booking_IDs where all Purchased_Product = 0
+bookings_to_remove = data_filtered.groupby('Booking_ID')['Purchased_Product'].apply(lambda x: (x == 0).all()).reset_index()
+bookings_to_remove = bookings_to_remove[bookings_to_remove['Purchased_Product'] == True]['Booking_ID']
+
+# Step 2: Remove those Booking_IDs from the dataset
+data_filtered = data_filtered[~data_filtered['Booking_ID'].isin(bookings_to_remove)]
+# Group by 'Booking_ID' and filter the rows where 'Purchased_Rate_Code' equals 'Rate_Code'
+data_filtered = data_filtered.groupby('Booking_ID').apply(lambda group: group[group['Purchased_Rate_Code'] == group['Rate_Code']]).reset_index(drop=True)
+# Find Booking_IDs that appear only once in the dataset
+single_booking_ids = data_filtered['Booking_ID'].value_counts()[data_filtered['Booking_ID'].value_counts() == 1].index
+
+# Filter rows where Booking_ID appears only once
+single_booking_rows = data_filtered[data_filtered['Booking_ID'].isin(single_booking_ids)]
+# Delete these rows from the original dataset
+data_filtered = data_filtered[~data_filtered['Booking_ID'].isin(single_booking_ids)]
+
+# Display the result
+print(data_filtered.describe())
+
+# Update 'Arrival_Rate' to be the same as 'Nightly_Rate' where 'Purchased_Product' = 1 within each 'Booking_ID'
+data_filtered.loc[data_filtered['Purchased_Product'] == 1, 'Arrival_Rate'] = data_filtered['Nightly_Rate']
+
+# Verify the update by checking the first few rows
+data_filtered[['Booking_ID', 'Purchased_Product', 'Nightly_Rate', 'Arrival_Rate']].head()
+# Display the result
+print(data_filtered.describe())
+# Filter the dataset to keep only the rows where 'Purchased_Product' equals 1
+#filtered_data = data_filtered[data_filtered['Purchased_Product'] == 1]
+# Define mapping rules
+room_mapping = {
+    'King Room 1': 'King Room',
+    'King Room 2': 'King Room',
+    'King Room 3': 'King Room',
+    'King Room 4': 'King Room',
+    '2 Double Beds Room 1': 'Special Type Room',
+    'Special Type Room 1': 'Special Type Room',
+    'Queen Room 1': 'Queen Room',
+    'Queen Room 2': 'Queen Room',
+    'Suite 1': 'Suite',
+    'Suite 2': 'Suite'
+}
+
+# Apply mapping to both columns
+data_filtered['Room_Type'] = data_filtered['Room_Type'].replace(room_mapping)
+data_filtered['Purchased_Room_Type'] = data_filtered['Purchased_Room_Type'].replace(room_mapping)
+filtered_data2 = data_filtered[data_filtered['Advance_Purchase'] >= 0]
+Cdata = filtered_data2
+
+Cdata.to_csv("Cleaned_Hotel_Data.csv", index=False)
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+encoder1 = LabelEncoder()
+encoder2 = LabelEncoder()
+Cdata['Purchased_Room_Type_encoded'] = encoder1.fit_transform(Cdata['Purchased_Room_Type'])
+Cdata['Room_Type_encoded'] = encoder2.fit_transform(Cdata['Room_Type'])
+
+# Define the features (X) and target (y)
+X = Cdata[['Nightly_Rate', 'Arrival_Rate', 'Room_Type_encoded']]  # Add more features if needed
+y = Cdata['Purchased_Room_Type_encoded']  # Target variable (room type chosen)
+
+# Split the data into training and test sets (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Add the other columns to the training and test sets
+train_Cdata = pd.concat([X_train, y_train], axis=1)
+test_Cdata = pd.concat([X_test, y_test], axis=1)
+
+disjoint_check = pd.merge(train_Cdata, test_Cdata, how='inner')
+
+# Check Train and Test sets are disjoint
+if not disjoint_check.empty:
+    print("Train and Test set have same rows")
+else:
+    print("Train and Test set have not same rows")
+
+# Save the training and test sets into separate CSV files
+train_Cdata.to_csv('train_Cdata.csv', index=False)
+test_Cdata.to_csv('test_Cdata.csv', index=False)
+
+# Instantiate the Decision Tree Classifier
+model = DecisionTreeClassifier(random_state=42)
+
+# Fit the model on the training data
+model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy:.4f}')
+
+# Display the classification report
+print('Classification Report:')
+print(classification_report(y_test, y_pred))
+
+# Calculate and plot the confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=encoder1.classes_, yticklabels=encoder1.classes_)
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted Label')
+plt.ylabel('True Labels')
+plt.show()
+
+# Example 1: Deeper tree with more splits
+#model1 = DecisionTreeClassifier(max_depth=8, random_state=42)
+#model1.fit(X_train, y_train)
+
+# Example 2: Shallow tree with fewer splits
+#model2 = DecisionTreeClassifier(max_depth=3, random_state=42)
+#model2.fit(X_train, y_train)
+
+# Visualize the decision tree for model1
+#plt.figure(figsize=(12, 8))
+#plot_tree(model1, filled=True, feature_names=['Nightly_Rate', 'Arrival_Rate', 'Room_Type_encoded'], class_names=label_encoder.classes_)
+#plt.title('Decision Tree 1 (Max Depth = 10)')
+#plt.show()
+
+# Visualize the decision tree for model2
+#plt.figure(figsize=(12, 8))
+#plot_tree(model2, filled=True, feature_names=['Nightly_Rate', 'Arrival_Rate', 'Room_Type_encoded'], class_names=label_encoder.classes_)
+#plt.title('Decision Tree 2 (Max Depth = 3)')
+#plt.show()
+
+
+import pandas as pd
+from sklearn import tree
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree, DecisionTreeClassifier, export_graphviz
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, accuracy_score
+import graphviz
+
+
+############ Tree 1: Gini & Best ################################
+
+# Define and train the model
+model = DecisionTreeClassifier(
+      criterion='gini',
+    splitter='best',
+    random_state=42
+)
+
+# Fit the model on actual training data
+model.fit(X_train, y_train)
+# Predict using test data
+predictions1 = model.predict(X_test)
+# Export decision tree for visualization
+#TREE_Vis = export_graphviz(
+   # model,
+   # out_file=None,
+   # feature_names=X_train.columns,
+   # class_names=encoder1.classes_,
+   # filled=True,
+   # rounded=True,
+   # special_characters=True
+#)
+
+# Visualize with Graphviz
+#graph = graphviz.Source(TREE_Vis)
+#graph.render("Hotel_DecisionTree", format="pdf", cleanup=True)  # optional: save as PDF
+#graph.view()  # opens the rendered tree
+
+
+#A smaller one
+plt.figure(figsize=(20, 10))
+plot_tree(model,
+          feature_names=X_train.columns,
+          class_names=encoder1.classes_,
+          filled=True,
+          max_depth=3,        # Optional: limit to top 3 levels
+          fontsize=12)        # 👈 Increase font size here
+plt.title("Decision Tree for Hotel Room Type Prediction (Gini & Best, Top 3 Levels Only)", fontsize=16)
+plt.show()
+
+# Evaluate the model
+conf_matrix1 = confusion_matrix(y_test, predictions1)
+accuracy1 = accuracy_score(y_test, predictions1)
+
+print("Confusion Matrix:")
+print(conf_matrix1)
+print(f"\nAccuracy: {accuracy1:.4f}")
+
+# Visualize confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix1, annot=True, cmap='Blues',
+            xticklabels=encoder1.classes_, yticklabels=encoder1.classes_,
+            cbar=False)
+plt.title("Confusion Matrix (Entropy Tree)", fontsize=20)
+plt.xlabel("Predicted", fontsize=15)
+plt.ylabel("Actual", fontsize=15)
+plt.show()
+#Plot the accuracy
+plt.figure(figsize=(6,4))
+plt.bar(['Accuracy'],[accuracy],color='skyblue')
+plt.ylim(0, 1)
+plt.title(f'Accuracy:{accuracy1:.4f}')
+plt.ylabel('Accuracy')
+plt.show()
+
+################## Tree plot 2 Entropy & Best splitter ######################
+
+# Define model using entropy
+model2 = DecisionTreeClassifier(
+    criterion='entropy',
+    splitter='best',
+    max_depth=None,
+    min_samples_split=2,
+    min_samples_leaf=1,
+    min_weight_fraction_leaf=0.0,
+    max_features=None,
+    random_state=42,
+    max_leaf_nodes=None,
+    min_impurity_decrease=0.0,
+    class_weight=None,
+    ccp_alpha=0.0
+)
+
+# Fit model to hotel training data
+model2.fit(X_train, y_train)
+
+# Predict using test data
+predictions2 = model2.predict(X_test)
+
+# Export decision tree for visualization
+plt.figure(figsize=(20, 10))
+plot_tree(model2, 
+          feature_names=X_train.columns, 
+          class_names=encoder1.classes_, 
+          filled=True, 
+          rounded=True,
+          max_depth=3,
+          fontsize=12)  # Show only the top 3 levels of the tree
+plt.title("Decision Tree (Entropy-based, Top 3 Levels Only)")
+plt.show()
+
+
+# Evaluate the model
+conf_matrix2 = confusion_matrix(y_test, predictions2)
+accuracy2 = accuracy_score(y_test, predictions2)
+
+print("Confusion Matrix:")
+print(conf_matrix2)
+print(f"\nAccuracy: {accuracy2:.4f}")
+
+# Visualize confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix2, annot=True, cmap='Blues',
+            xticklabels=encoder1.classes_, yticklabels=encoder1.classes_,
+            cbar=False)
+plt.title("Confusion Matrix (Entropy Tree)", fontsize=20)
+plt.xlabel("Predicted", fontsize=15)
+plt.ylabel("Actual", fontsize=15)
+plt.show()
+#Plot the accuracy
+plt.figure(figsize=(6,4))
+plt.bar(['Accuracy'],[accuracy],color='skyblue')
+plt.ylim(0, 1)
+plt.title(f'Accuracy:{accuracy2:.4f}')
+plt.ylabel('Accuracy')
+plt.show()
+
+######################### Tree Plot 3 Gini and random splitter #########################
+model3 = DecisionTreeClassifier(criterion='gini',splitter='random',max_depth=None,
+                  min_samples_split=2, min_samples_leaf=1,
+                  min_weight_fraction_leaf=0.0,
+                  max_features=None, random_state=42,
+                  max_leaf_nodes=None, min_impurity_decrease=0.0,
+                  class_weight=None, ccp_alpha=0.0)
+model3.fit(X_train, y_train)
+# Predict using test data
+predictions3 = model3.predict(X_test)
+
+# Export decision tree for visualization
+plt.figure(figsize=(20, 10))
+plot_tree(model3, 
+          feature_names=X_train.columns, 
+          class_names=encoder1.classes_, 
+          filled=True, 
+          rounded=True,
+          max_depth=3,
+          fontsize=12)  # Show only the top 3 levels of the tree
+plt.title("Decision Tree (Gini and random, Top 3 Levels Only)")
+plt.show()
+
+
+# Evaluate the model
+conf_matrix3 = confusion_matrix(y_test, predictions3)
+accuracy3 = accuracy_score(y_test, predictions3)
+
+print("Confusion Matrix:")
+print(conf_matrix3)
+print(f"\nAccuracy: {accuracy3:.4f}")
+
+# Visualize confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix3, annot=True, cmap='Blues',
+            xticklabels=encoder1.classes_, yticklabels=encoder1.classes_,
+            cbar=False)
+plt.title("Confusion Matrix (Gini and Random Tree)", fontsize=20)
+plt.xlabel("Predicted", fontsize=15)
+plt.ylabel("Actual", fontsize=15)
+plt.show()
+#Plot the accuracy
+plt.figure(figsize=(6,4))
+plt.bar(['Accuracy'],[accuracy],color='skyblue')
+plt.ylim(0, 1)
+plt.title(f'Accuracy:{accuracy3:.4f}')
+plt.ylabel('Accuracy')
+plt.show()
+
+# Model names and accuracy values
+model_names = ['Gini + Best', 'Entropy + Best', 'Gini + Random']
+accuracies = [accuracy1, accuracy2, accuracy3]
+
+# Create the bar chart
+plt.figure(figsize=(8, 5))
+bars = plt.bar(model_names, accuracies, color=['skyblue', 'lightgreen', 'salmon'])
+
+# Add accuracy labels on top of each bar
+for bar, acc in zip(bars, accuracies):
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width() / 2, height + 0.02, f'{acc:.4f}',
+             ha='center', va='bottom', fontsize=12)
+
+# Formatting
+plt.ylim(0, 1.1)
+plt.title('Comparison of Decision Tree Model Accuracies', fontsize=16)
+plt.ylabel('Accuracy', fontsize=14)
+plt.xlabel('Model', fontsize=14)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
