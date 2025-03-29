@@ -1,0 +1,141 @@
+"""
+Created on Thu Mar 13 13:34:10 2025
+
+@author: Martian
+"""
+import pandas as pd
+import statsmodels.api as sm
+import numpy as np
+# Load dataset
+file_path = "D:/OM_PhD_CUBoulder/Classes/25S_IndependentStudy/HW/Explore/Bodea - Choice based Revenue Management - Data Set - Hotel 1.csv"  # Update with your actual file path
+data = pd.read_csv(file_path)
+
+#Data Prepare
+#############Keep data with choice sets
+data = data[data['Merge_Indicator'] == 1]
+# Group data by Booking_ID and summarize the purchased room type
+a = data.groupby('Booking_ID').agg(n=('Product_ID', 'size'), 
+                                   purchased_room=('Purchased_Room_Type', 'first')).reset_index()
+
+# Display the frequency table for purchased room types
+print(a['purchased_room'].value_counts())
+print(len(a))
+
+# Summarize the price by different purchased room types
+b = data.groupby('Purchased_Room_Type').agg(mean_nightly_rate=('Nightly_Rate', 'mean'),
+                                             sd_nightly_rate=('Nightly_Rate', 'std')).reset_index()
+
+print(b)
+
+# Summarize the Arrival_Rate by different room types
+c = data.groupby('Room_Type').agg(mean_arrival_rate=('Arrival_Rate', 'mean'),
+                                   sd_arrival_rate=('Arrival_Rate', 'std')).reset_index()
+
+print(c)
+
+# Remove room types that are rarely purchased (those with <= 10 purchases)
+purchase_count = a['purchased_room'].value_counts()
+rare_room = purchase_count[purchase_count <= 10].index.tolist()
+print(rare_room)
+
+# Filter out rare room types (i.e., rare purchases)
+data_filtered = data[~data['Purchased_Room_Type'].isin(rare_room)]
+data_filtered = data_filtered[~data_filtered['Room_Type'].isin(rare_room)]
+
+
+# Summarize the newly filtered data by Booking_ID
+purchase_count_new = data_filtered.groupby('Booking_ID').agg(purchased_room=('Purchased_Room_Type', 'first')).reset_index()
+print(purchase_count_new)
+
+# Room types with more than 10 purchases
+room_type_sets = purchase_count_new['purchased_room'].value_counts().index.tolist()
+print(room_type_sets)
+
+
+
+# Step 1: Identify Booking_IDs where all Purchased_Product = 0
+bookings_to_remove = data_filtered.groupby('Booking_ID')['Purchased_Product'].apply(lambda x: (x == 0).all()).reset_index()
+bookings_to_remove = bookings_to_remove[bookings_to_remove['Purchased_Product'] == True]['Booking_ID']
+
+# Step 2: Remove those Booking_IDs from the dataset
+data_filtered = data_filtered[~data_filtered['Booking_ID'].isin(bookings_to_remove)]
+# Group by 'Booking_ID' and filter the rows where 'Purchased_Rate_Code' equals 'Rate_Code'
+data_filtered = data_filtered.groupby('Booking_ID').apply(lambda group: group[group['Purchased_Rate_Code'] == group['Rate_Code']]).reset_index(drop=True)
+# Find Booking_IDs that appear only once in the dataset
+single_booking_ids = data_filtered['Booking_ID'].value_counts()[data_filtered['Booking_ID'].value_counts() == 1].index
+
+# Filter rows where Booking_ID appears only once
+single_booking_rows = data_filtered[data_filtered['Booking_ID'].isin(single_booking_ids)]
+# Delete these rows from the original dataset
+data_filtered = data_filtered[~data_filtered['Booking_ID'].isin(single_booking_ids)]
+
+# Display the result
+print(data_filtered.describe())
+
+# Update 'Arrival_Rate' to be the same as 'Nightly_Rate' where 'Purchased_Product' = 1 within each 'Booking_ID'
+data_filtered.loc[data_filtered['Purchased_Product'] == 1, 'Arrival_Rate'] = data_filtered['Nightly_Rate']
+
+# Verify the update by checking the first few rows
+data_filtered[['Booking_ID', 'Purchased_Product', 'Nightly_Rate', 'Arrival_Rate']].head()
+# Display the result
+print(data_filtered.describe())
+# Filter the dataset to keep only the rows where 'Purchased_Product' equals 1
+#filtered_data = data_filtered[data_filtered['Purchased_Product'] == 1]
+# Define mapping rules
+room_mapping = {
+    'King Room 1': 'King Room',
+    'King Room 2': 'King Room',
+    'King Room 3': 'King Room',
+    'King Room 4': 'King Room',
+    '2 Double Beds Room 1': 'Special Type Room',
+    'Special Type Room 1': 'Special Type Room',
+    'Queen Room 1': 'Queen Room',
+    'Queen Room 2': 'Queen Room',
+    'Suite 1': 'Suite',
+    'Suite 2': 'Suite'
+}
+
+# Apply mapping to both columns
+data_filtered['Room_Type'] = data_filtered['Room_Type'].replace(room_mapping)
+data_filtered['Purchased_Room_Type'] = data_filtered['Purchased_Room_Type'].replace(room_mapping)
+filtered_data2 = data_filtered[data_filtered['Advance_Purchase'] >= 0]
+Cdata = filtered_data2
+
+Cdata.to_csv("Cleaned_Hotel_Data.csv", index=False)
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+encoder1 = LabelEncoder()
+encoder2 = LabelEncoder()
+Cdata['Purchased_Room_Type_encoded'] = encoder1.fit_transform(Cdata['Purchased_Room_Type'])
+Cdata['Room_Type_encoded'] = encoder2.fit_transform(Cdata['Room_Type'])
+
+# Define the features (X) and target (y)
+X = Cdata[['Nightly_Rate', 'Arrival_Rate', 'Room_Type_encoded']]  # Add more features if needed
+y = Cdata['Purchased_Room_Type_encoded']  # Target variable (room type chosen)
+
+# Split the data into training and test sets (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Add the other columns to the training and test sets
+train_Cdata = pd.concat([X_train, y_train], axis=1)
+test_Cdata = pd.concat([X_test, y_test], axis=1)
+
+disjoint_check = pd.merge(train_Cdata, test_Cdata, how='inner')
+
+# Check Train and Test sets are disjoint
+if not disjoint_check.empty:
+    print("Train and Test set have same rows")
+else:
+    print("Train and Test set have not same rows")
+
+# Save the training and test sets into separate CSV files
+train_Cdata.to_csv('train_Cdata.csv', index=False)
+test_Cdata.to_csv('test_Cdata.csv', index=False)
