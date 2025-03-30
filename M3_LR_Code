@@ -1,0 +1,554 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Mar 30 10:54:58 2025
+
+@author: Martian
+"""
+
+import pandas as pd
+import statsmodels.api as sm
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+from mpl_toolkits import mplot3d
+## Confusion matrix (fancy)
+import seaborn as sns 
+from sklearn.metrics import confusion_matrix  
+
+# Load dataset
+file_path = "D:/OM_PhD_CUBoulder/Classes/25S_IndependentStudy/HW/Explore/Bodea - Choice based Revenue Management - Data Set - Hotel 1.csv"  # Update with your actual file path
+data = pd.read_csv(file_path)
+
+#Data Prepare
+#############Keep data with choice sets
+data = data[data['Merge_Indicator'] == 1]
+# Group data by Booking_ID and summarize the purchased room type
+a = data.groupby('Booking_ID').agg(n=('Product_ID', 'size'), 
+                                   purchased_room=('Purchased_Room_Type', 'first')).reset_index()
+
+# Display the frequency table for purchased room types
+print(a['purchased_room'].value_counts())
+print(len(a))
+
+# Summarize the price by different purchased room types
+b = data.groupby('Purchased_Room_Type').agg(mean_nightly_rate=('Nightly_Rate', 'mean'),
+                                             sd_nightly_rate=('Nightly_Rate', 'std')).reset_index()
+
+print(b)
+
+# Summarize the Arrival_Rate by different room types
+c = data.groupby('Room_Type').agg(mean_arrival_rate=('Arrival_Rate', 'mean'),
+                                   sd_arrival_rate=('Arrival_Rate', 'std')).reset_index()
+
+print(c)
+
+# Remove room types that are rarely purchased (those with <= 10 purchases)
+purchase_count = a['purchased_room'].value_counts()
+rare_room = purchase_count[purchase_count <= 10].index.tolist()
+print(rare_room)
+
+# Filter out rare room types (i.e., rare purchases)
+data_filtered = data[~data['Purchased_Room_Type'].isin(rare_room)]
+data_filtered = data_filtered[~data_filtered['Room_Type'].isin(rare_room)]
+
+
+# Summarize the newly filtered data by Booking_ID
+purchase_count_new = data_filtered.groupby('Booking_ID').agg(purchased_room=('Purchased_Room_Type', 'first')).reset_index()
+print(purchase_count_new)
+
+# Room types with more than 10 purchases
+room_type_sets = purchase_count_new['purchased_room'].value_counts().index.tolist()
+print(room_type_sets)
+
+##As the logistic regression requires binary results, we need to choose two roomtypes as out results. From the purchase frequency, KR3 and KR4 are the most popular;
+##Keep King Room 3 and King Room 4 as the categories.
+data_filtered = data_filtered[
+    data_filtered['Purchased_Room_Type'].isin(['King Room 3', 'King Room 4'])
+]
+
+# Step 1: Identify Booking_IDs where all Purchased_Product = 0
+bookings_to_remove = data_filtered.groupby('Booking_ID')['Purchased_Product'].apply(lambda x: (x == 0).all()).reset_index()
+bookings_to_remove = bookings_to_remove[bookings_to_remove['Purchased_Product'] == True]['Booking_ID']
+
+# Step 2: Remove those Booking_IDs from the dataset
+data_filtered = data_filtered[~data_filtered['Booking_ID'].isin(bookings_to_remove)]
+# Group by 'Booking_ID' and filter the rows where 'Purchased_Rate_Code' equals 'Rate_Code'
+data_filtered = data_filtered.groupby('Booking_ID').apply(lambda group: group[group['Purchased_Rate_Code'] == group['Rate_Code']]).reset_index(drop=True)
+# Find Booking_IDs that appear only once in the dataset
+single_booking_ids = data_filtered['Booking_ID'].value_counts()[data_filtered['Booking_ID'].value_counts() == 1].index
+
+# Filter rows where Booking_ID appears only once
+single_booking_rows = data_filtered[data_filtered['Booking_ID'].isin(single_booking_ids)]
+# Delete these rows from the original dataset
+data_filtered = data_filtered[~data_filtered['Booking_ID'].isin(single_booking_ids)]
+
+# Display the result
+print(data_filtered.describe())
+
+# Update 'Arrival_Rate' to be the same as 'Nightly_Rate' where 'Purchased_Product' = 1 within each 'Booking_ID'
+data_filtered.loc[data_filtered['Purchased_Product'] == 1, 'Arrival_Rate'] = data_filtered['Nightly_Rate']
+
+# Verify the update by checking the first few rows
+data_filtered[['Booking_ID', 'Purchased_Product', 'Nightly_Rate', 'Arrival_Rate']].head()
+# Display the result
+print(data_filtered.describe())
+
+data_filtered = data_filtered[data_filtered['Advance_Purchase'] >= 0]
+
+data_filtered['Purchased_Room_Type'] = data_filtered['Purchased_Room_Type'].map({
+    'King Room 3': 0,
+    'King Room 4': 1
+}).astype(int)
+
+DF = data_filtered 
+
+DF.to_csv("Cleaned_Hotel_Data_Logistic.csv", index=False)
+
+
+## Set y to the label. Check the shape!
+y = np.array(DF.iloc[:,15]).T
+
+#y = np.array([y]).T
+print("y is\n", y)
+print("The shape of y is\n", y.shape) 
+
+##Place the data (and not the labels) in DF
+DF=DF.iloc[:, [12, 17]]
+print(DF)
+X = np.array(DF)
+print("X is\n", X)
+print("The shape of X is\n", X.shape)
+
+
+##InputColumns = 2
+##NumberOfLabels = 2
+# Make sure y has the same length as X
+y = y[:len(X)]
+
+#Learning Rate
+LR=1
+
+# 3D Plot
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+x1 = X[:, 0]
+x2 = X[:, 1]
+
+ax.scatter(x1, x2, y, s=50)
+ax.set_title('Dataset')
+ax.set_xlabel('Nightly Rate')
+ax.set_ylabel('Arrival Rate')
+ax.set_zlabel('Room Type (as label)')
+plt.show()
+
+##----------------------------------
+## Set up initial weights and biases
+## -------------------------------------
+w = np.array([[1,1]])
+b = 0
+print(w)
+print(w.shape)
+
+##------------------------------------------------
+## Before we move forward, we know that at
+## some point we will need to properly multiply X and w.
+## Let's try to do this now. Recall that our linear equation 
+## looks like
+## w1x1 + w2x2 + b
+##------------------------------------------------
+
+print("X is\n",X)
+print("The shape of X is\n", X.shape)  
+print("w is\n",w)
+print("w tranpose is\n", w.T)
+print("The shape of w transpose is\n", w.T.shape)
+
+z = (X @ w.T) + b
+print("z = (X @ w.T) + b\n", z)
+print("The shape of z is\n", z.shape)
+
+## OK! Do this by hand asa well and compare.
+
+## Next, we need to apply the *sigmoid* function to all the z value results.
+## Let's create a function for sig
+
+def Sigmoid(s, deriv=False):
+    if (deriv == True):
+        return s * (1 - s)
+    return 1/(1 + np.exp(-s))
+
+## TEST YOUR FUNCTION!
+print(Sigmoid(2)) ## answer should be .88079
+
+## OK - it works and so now we can create S_z by applying
+## the sigmoid to all the values in z
+
+S_z = Sigmoid(z)
+print("S(z) is\n", S_z)
+
+##Note that S_z here is the same as y^
+## It is the output of the logistic regression
+y_hat = np.clip(S_z, 1e-7, 1 - 1e-7)
+print(y_hat)
+print("y:", y.shape)
+print("y_hat:", y_hat.shape)
+
+
+## Do and check this by hand. 
+
+##-------------------------------------------
+## What is our Loss function?
+## How do we calculate the error
+## 
+## Recall that our Loss function is 
+## the LCE - Loss Categorical Entropy function
+## for binary (0 and 1) labels. 
+## LCE = -1/n SUM ylog(y^) + (1 - y)log(1 - y^), 
+## where y^ is the predicted value
+## and the log is log base e. The "y" is the label, which here is 0 or 1. 
+## The "n" is the number of rows in the dataset. 
+##---------------------------------------------------
+
+
+## Now - think about what we are doing
+## We want to minimize the LCE by updating w and b using gradient descent
+## Our LR (learning rate) was set above and can be tuned. 
+# THEN calculate loss
+
+
+ 
+
+## Shapes matter when using vectors and matrices.
+## Here, we will need to transpose y
+print("y is\n",y)
+print("y_hat is\n", y_hat)
+## Here, y is not the right shape for our goal. We need the transpose. YOU must always
+## check on these types of things. 
+#print(type(y))
+#print(np.transpose([y])) ## you need the []
+y = np.transpose([y])
+print("Updated y is\n",y)
+print("y_hat is\n",y_hat)
+
+
+## Keep each LCE value
+AllError_LCE=[]
+##----------------------------------
+## The epochs are the number of iterations we want to go through
+## to recalculate w and b with the goal of optimization (minimization of LCE)
+epochs=30
+
+for i in range(epochs):
+    print("Epoch \n", i)
+    z = (X @ w.T) + b
+    print("The z here is\n", z)
+    y_hat=Sigmoid(z)    
+    y_hat = np.clip(y_hat, 1e-7, 1 - 1e-7)
+    print("The y_hat here is\n", y_hat)
+
+    ## Get the LCE....
+    ## Step 1 to get LCE
+    LCE=-(np.sum((y*np.log(y_hat)) + ((1 - y)*np.log(1 - y_hat))))
+    #print("Current Loss is\n", LCE)
+    ## Step 2 to get LCE
+    ## If using Avg. BCE then the LCE = -(np.sum(LCE1))/n  ## its "-" in front because we multiply by -1/n
+    print("The LCE for epoch ", i, "is\n", LCE)
+    
+    ##Keep each LCE value - each error
+    print("Appending loss:", LCE)
+    AllError_LCE.append(LCE)
+    print("Current error list:", AllError_LCE)
+
+    
+    ## Now we need to get the derivatives so we can update w and b
+    ## Recall that dL/dw = dL/dy^ * dy^/dz * dz/dw --> (y^ - y)xT
+    ## and dL/db = dL/dy^ * dy^/dz * dz/db --> (y^ - y)
+
+    ## Let's get y^ - y first and let's call this "error"
+    error = y_hat-y
+    print("The error y^ - y is\n", error)
+    ## Next, let's multiply the y^-y by X so that we
+    ## get the shape of w. Recall that w is 1 row by 2 columns
+    ## Let's print this to make sure ...
+    print(w)
+    print(w.shape)
+    
+    dL_dw = np.transpose(error) @ X
+    ## (1/n) * 
+    print("The dL_dw is\n", dL_dw, "\n")
+    
+    ## Now let's get b
+    ## For b, we will use the average - so we will sum up 
+    ## all the error values and then multiply by 1/n
+    ## Let's first get 1/n (y^ - y)
+    b1=error
+    #(1/n)*
+    print(b1)
+    ## Now get the mean of this vector
+    dL_db=np.average(b1)
+    print("The dL_db is\n", dL_db)
+    
+    ## OK - let's look at new w and new b
+    print("The update for w is\n",dL_dw)
+    print("The update for b is\n", dL_db)
+    
+    ## Use the gradient to update w and b
+    w = w - (LR * dL_dw)
+    b = b - (LR * dL_db)
+    
+    print("The new w value is\n", w)
+    
+############################end of for loop-----
+
+## Plot and print results   
+#-----------------------------------------
+#print(len(AllError_LCE))
+##Plot the change in Loss over epochs
+fig1 = plt.figure()
+plt.title("Loss Reduction Over Epochs")
+plt.xlabel("Epochs")
+plt.ylabel("Error")
+ax = plt.axes()
+x = np.linspace(0, epochs, epochs) #start, stop, how many 
+#print(x.shape)
+ax.plot(x, AllError_LCE)    
+
+print("y shape:", y.shape)
+print("y_hat shape:", y_hat.shape)
+
+print("The predicted w is \n", w)
+print("The predicted b is\n",b)
+
+print("AllError_LCE:", AllError_LCE)
+
+################################################
+##
+## Use the model from above to make
+## predictions. 
+## 
+#################################################
+
+## Read in test data
+## !!! Remember that this model from above
+## is ONLY for Height, Weight data to predict
+## BB_Player as 0 or 1. 
+##
+## NOTE: You can update this code however
+## to work on modeling any data.
+
+## Note also that this code assumes that the data
+## is min-max normalized. 
+
+## Define X_test as:
+X_test=np.array([ [520,600],[500,200],[200,500],[300,320],[200,210]])
+print(X_test)
+print(X_test.shape)
+labels=np.array([[1],[0],[1],[0],[1]])
+print(labels)
+Prediction=Sigmoid((X_test @ w.T) + b)
+
+## Update prediction using threshold >=.5 --> 1, else 0
+Prediction[Prediction >= .5] = 1
+Prediction[Prediction < .5] = 0
+
+print(Prediction)
+
+## Confusion matrix (fancy)
+#import seaborn as sns 
+#from sklearn.metrics import confusion_matrix   
+fig2 = plt.figure()
+plt.title("Confusion Matrix For Predictions vs. Actual Values")
+cm = confusion_matrix(labels, Prediction)
+print(cm)
+ax= plt.subplot()
+sns.heatmap(cm, annot=True, fmt='g', ax=ax, cmap='Blues')  
+#annot=True to annotate cells, ftm='g' to disable scientific notation
+# labels, title and ticks
+ax.set_xlabel("Predicted Labels")
+ax.set_ylabel("True Labels")
+ax.set_title("Confusion Matrix for Hotel Room Type Prediction")
+ax.xaxis.set_ticklabels(["King Room 3", "King Room 4"])
+ax.yaxis.set_ticklabels(["King Room 3", "King Room 4"])
+
+# --- Visualize Accuracy ---
+# --- Calculate Accuracy ---
+from sklearn.metrics import accuracy_score
+accuracy = accuracy_score(labels, Prediction)
+print(f"Accuracy Rate: {accuracy:.2%}")
+
+# --- Visualize Accuracy ---
+plt.figure(figsize=(5, 4))
+plt.bar(['Accuracy', 'Error'], [accuracy, 1 - accuracy], color=['green', 'red'])
+plt.title('Model Accuracy on Test Set')
+plt.ylabel('Proportion')
+plt.ylim(0, 1)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+### Use real test data (not random hardcoded inputs)
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import confusion_matrix, classification_report
+# --- Load cleaned hotel dataset ---
+DF = pd.read_csv("Cleaned_Hotel_Data_Logistic.csv")
+# --- Define features and target ---
+X_full = DF[['Nightly_Rate', 'Arrival_Rate']].values
+y_full = DF['Purchased_Room_Type'].values.reshape(-1, 1)  # 0 = KR3, 1 = KR4
+
+# --- Split data into train and test sets ---
+X_train, X_test, y_train, y_test = train_test_split(X_full, y_full, test_size=0.2, random_state=42)
+# Add the other columns to the training and test sets
+train_DF = pd.concat([
+    pd.DataFrame(X_train, columns=['Nightly_Rate', 'Arrival_Rate']),
+    pd.DataFrame(y_train, columns=['Purchased_Room_Type'])
+], axis=1)
+
+test_DF = pd.concat([
+    pd.DataFrame(X_test, columns=['Nightly_Rate', 'Arrival_Rate']),
+    pd.DataFrame(y_test, columns=['Purchased_Room_Type'])
+], axis=1)
+
+disjoint_check = pd.merge(train_DF, test_DF, how='inner')
+
+# Check Train and Test sets are disjoint
+if not disjoint_check.empty:
+    print("Train and Test set have same rows")
+else:
+    print("Train and Test set have not same rows")
+
+# Save the training and test sets into separate CSV files
+train_DF.to_csv('train_DF.csv', index=False)
+test_DF.to_csv('test_DF.csv', index=False)
+
+# --- Normalize data ---
+scaler = MinMaxScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# --- Normalize data ---
+scaler = MinMaxScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+
+# --- Initialize weights and bias ---
+w = np.array([[1.0, 1.0]])
+b = 0.0
+
+# --- Sigmoid function ---
+def Sigmoid(s, deriv=False):
+    if deriv:
+        return s * (1 - s)
+    return 1 / (1 + np.exp(-s))
+
+# --- Training with gradient descent ---
+epochs = 30
+LR = 1
+AllError_LCE = []
+
+for i in range(epochs):
+    z = (X_train @ w.T) + b
+    y_hat = Sigmoid(z)
+    y_hat = np.clip(y_hat, 1e-7, 1 - 1e-7)
+
+    LCE = -np.sum(y_train * np.log(y_hat) + (1 - y_train) * np.log(1 - y_hat))
+    AllError_LCE.append(LCE)
+
+    error = y_hat - y_train
+    dL_dw = error.T @ X_train
+    dL_db = np.mean(error)
+
+    w -= LR * dL_dw
+    b -= LR * dL_db
+
+# --- Plot loss over epochs ---
+plt.figure()
+plt.plot(range(epochs), AllError_LCE)
+plt.xlabel("Epoch")
+plt.ylabel("Loss (LCE)")
+plt.title("Loss Reduction Over Epochs")
+plt.grid(True)
+plt.show()
+
+# --- Predict on real test set ---
+z_test = (X_test @ w.T) + b
+y_hat_test = Sigmoid(z_test)
+y_pred_test = (y_hat_test >= 0.5).astype(int)
+
+# --- Confusion Matrix ---
+cm = confusion_matrix(y_test, y_pred_test)
+
+plt.figure(figsize=(6, 4))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=["King Room 3", "King Room 4"],
+            yticklabels=["King Room 3", "King Room 4"])
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.title("Confusion Matrix - Real Test Data")
+plt.show()
+
+# --- Classification Report ---
+print(classification_report(y_test, y_pred_test, target_names=["King Room 3", "King Room 4"]))
+
+# --- Calculate Accuracy ---
+from sklearn.metrics import accuracy_score
+
+accuracy = accuracy_score(y_test, y_pred_test)
+print(f"Accuracy: {accuracy:.4f}")
+
+# --- Visualize Accuracy ---
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred_test)
+print(f"Accuracy Rate: {accuracy:.2%}")
+
+# Visualize
+plt.figure(figsize=(5, 4))
+plt.bar(['Accuracy', 'Error'], [accuracy, 1 - accuracy], color=['green', 'red'])
+plt.title('Model Accuracy on Test Set')
+plt.ylabel('Proportion')
+plt.ylim(0, 1)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+##########NB
+# Instantiate the Multinomial Naive Bayes model
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.preprocessing import LabelEncoder
+model = MultinomialNB()
+
+# Fit the model on the training Cdata
+model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy:.4f}')
+
+# Display the classification report
+print('Classification Report:')
+print(classification_report(y_test, y_pred))
+
+#calculate confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+label_encoder = LabelEncoder()
+
+DF['Purchased_Room_Type_encoded'] = label_encoder.fit_transform(DF['Purchased_Room_Type'])
+DF['Room_Type_encoded'] = label_encoder.fit_transform(DF['Purchased_Room_Type'])
+#plot the confusion matrix
+plt.figure(figsize=(8,6)) 
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_)
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted Label')
+plt.ylabel('True Labels')
+plt.show()
+
+#Plot the accuracy
+plt.figure(figsize=(6,4))
+plt.bar(['Accuracy'],[accuracy],color='skyblue')
+plt.ylim(0, 1)
+plt.title(f'Accuracy:{accuracy:.4f}')
+plt.ylabel('Accuracy')
+plt.show()
