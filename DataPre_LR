@@ -1,0 +1,144 @@
+
+import pandas as pd
+import statsmodels.api as sm
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+from mpl_toolkits import mplot3d
+## Confusion matrix (fancy)
+import seaborn as sns 
+from sklearn.metrics import confusion_matrix  
+
+# Load dataset
+file_path = "D:/OM_PhD_CUBoulder/Classes/25S_IndependentStudy/HW/Explore/Bodea - Choice based Revenue Management - Data Set - Hotel 1.csv"  # Update with your actual file path
+data = pd.read_csv(file_path)
+
+#Data Prepare
+#############Keep data with choice sets
+data = data[data['Merge_Indicator'] == 1]
+# Group data by Booking_ID and summarize the purchased room type
+a = data.groupby('Booking_ID').agg(n=('Product_ID', 'size'), 
+                                   purchased_room=('Purchased_Room_Type', 'first')).reset_index()
+
+# Display the frequency table for purchased room types
+print(a['purchased_room'].value_counts())
+print(len(a))
+
+# Summarize the price by different purchased room types
+b = data.groupby('Purchased_Room_Type').agg(mean_nightly_rate=('Nightly_Rate', 'mean'),
+                                             sd_nightly_rate=('Nightly_Rate', 'std')).reset_index()
+
+print(b)
+
+# Summarize the Arrival_Rate by different room types
+c = data.groupby('Room_Type').agg(mean_arrival_rate=('Arrival_Rate', 'mean'),
+                                   sd_arrival_rate=('Arrival_Rate', 'std')).reset_index()
+
+print(c)
+
+# Remove room types that are rarely purchased (those with <= 10 purchases)
+purchase_count = a['purchased_room'].value_counts()
+rare_room = purchase_count[purchase_count <= 10].index.tolist()
+print(rare_room)
+
+# Filter out rare room types (i.e., rare purchases)
+data_filtered = data[~data['Purchased_Room_Type'].isin(rare_room)]
+data_filtered = data_filtered[~data_filtered['Room_Type'].isin(rare_room)]
+
+
+# Summarize the newly filtered data by Booking_ID
+purchase_count_new = data_filtered.groupby('Booking_ID').agg(purchased_room=('Purchased_Room_Type', 'first')).reset_index()
+print(purchase_count_new)
+
+# Room types with more than 10 purchases
+room_type_sets = purchase_count_new['purchased_room'].value_counts().index.tolist()
+print(room_type_sets)
+
+##As the logistic regression requires binary results, we need to choose two roomtypes as out results. From the purchase frequency, KR3 and KR4 are the most popular;
+##Keep King Room 3 and King Room 4 as the categories.
+data_filtered = data_filtered[
+    data_filtered['Purchased_Room_Type'].isin(['King Room 3', 'King Room 4'])
+]
+
+# Step 1: Identify Booking_IDs where all Purchased_Product = 0
+bookings_to_remove = data_filtered.groupby('Booking_ID')['Purchased_Product'].apply(lambda x: (x == 0).all()).reset_index()
+bookings_to_remove = bookings_to_remove[bookings_to_remove['Purchased_Product'] == True]['Booking_ID']
+
+# Step 2: Remove those Booking_IDs from the dataset
+data_filtered = data_filtered[~data_filtered['Booking_ID'].isin(bookings_to_remove)]
+# Group by 'Booking_ID' and filter the rows where 'Purchased_Rate_Code' equals 'Rate_Code'
+data_filtered = data_filtered.groupby('Booking_ID').apply(lambda group: group[group['Purchased_Rate_Code'] == group['Rate_Code']]).reset_index(drop=True)
+# Find Booking_IDs that appear only once in the dataset
+single_booking_ids = data_filtered['Booking_ID'].value_counts()[data_filtered['Booking_ID'].value_counts() == 1].index
+
+# Filter rows where Booking_ID appears only once
+single_booking_rows = data_filtered[data_filtered['Booking_ID'].isin(single_booking_ids)]
+# Delete these rows from the original dataset
+data_filtered = data_filtered[~data_filtered['Booking_ID'].isin(single_booking_ids)]
+
+# Display the result
+print(data_filtered.describe())
+
+# Update 'Arrival_Rate' to be the same as 'Nightly_Rate' where 'Purchased_Product' = 1 within each 'Booking_ID'
+data_filtered.loc[data_filtered['Purchased_Product'] == 1, 'Arrival_Rate'] = data_filtered['Nightly_Rate']
+
+# Verify the update by checking the first few rows
+data_filtered[['Booking_ID', 'Purchased_Product', 'Nightly_Rate', 'Arrival_Rate']].head()
+# Display the result
+print(data_filtered.describe())
+
+data_filtered = data_filtered[data_filtered['Advance_Purchase'] >= 0]
+
+data_filtered['Purchased_Room_Type'] = data_filtered['Purchased_Room_Type'].map({
+    'King Room 3': 0,
+    'King Room 4': 1
+}).astype(int)
+
+DF = data_filtered 
+
+DF.to_csv("Cleaned_Hotel_Data_Logistic.csv", index=False)
+
+### Use real test data (not random hardcoded inputs)
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import confusion_matrix, classification_report
+# --- Load cleaned hotel dataset ---
+DF = pd.read_csv("Cleaned_Hotel_Data_Logistic.csv")
+# --- Define features and target ---
+X_full = DF[['Nightly_Rate', 'Arrival_Rate']].values
+y_full = DF['Purchased_Room_Type'].values.reshape(-1, 1)  # 0 = KR3, 1 = KR4
+
+# --- Split data into train and test sets ---
+X_train, X_test, y_train, y_test = train_test_split(X_full, y_full, test_size=0.2, random_state=42)
+# Add the other columns to the training and test sets
+train_DF = pd.concat([
+    pd.DataFrame(X_train, columns=['Nightly_Rate', 'Arrival_Rate']),
+    pd.DataFrame(y_train, columns=['Purchased_Room_Type'])
+], axis=1)
+
+test_DF = pd.concat([
+    pd.DataFrame(X_test, columns=['Nightly_Rate', 'Arrival_Rate']),
+    pd.DataFrame(y_test, columns=['Purchased_Room_Type'])
+], axis=1)
+
+disjoint_check = pd.merge(train_DF, test_DF, how='inner')
+
+# Check Train and Test sets are disjoint
+if not disjoint_check.empty:
+    print("Train and Test set have same rows")
+else:
+    print("Train and Test set have not same rows")
+
+# Save the training and test sets into separate CSV files
+train_DF.to_csv('train_DF.csv', index=False)
+test_DF.to_csv('test_DF.csv', index=False)
+
+# --- Normalize data ---
+scaler = MinMaxScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# --- Normalize data ---
+scaler = MinMaxScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
