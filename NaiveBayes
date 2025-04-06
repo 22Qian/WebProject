@@ -1,0 +1,291 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Apr  5 22:16:11 2025
+
+@author: Martian
+"""
+
+import pandas as pd
+# Load dataset
+file_path = "D:/OM_PhD_CUBoulder/Classes/25S_MachineLearning/M3 SupervisedLearning/data_cleaned.csv"  # Update with your actual file path
+df = pd.read_csv(file_path)
+print(df.head())
+print(df.columns)
+
+# keep these columns ['Nightly_Rate', 'Arrival_Rate', 'Room_Type', 'Advance_Purchase', 'Purchased_Room_Type']
+label = ['Purchased_Room_Type']
+df_filtered = df[['Nightly_Rate', 'Arrival_Rate', 'Advance_Purchase', 'Purchased_Room_Type']]
+print(df_filtered.head())
+
+## Gaussian NB
+gaussian_df = df_filtered.copy()
+from sklearn.model_selection import train_test_split
+# Train test splitting
+Training_G, Testing_G = train_test_split(gaussian_df, test_size=.2)
+
+Training_G_Label = Training_G["Purchased_Room_Type"]
+Training_G=Training_G.drop(["Purchased_Room_Type"], axis=1)
+
+Testing_G_Label = Testing_G["Purchased_Room_Type"]
+Testing_G=Testing_G.drop(["Purchased_Room_Type"], axis=1)
+
+print(Training_G.head(3))
+print(Testing_G.head(3))
+print(Testing_G_Label.head(3))
+
+Training_G.to_csv("Training_G.csv", index=False)
+Testing_G.to_csv("Testing_G.csv", index=False)
+
+
+# Fitting
+from sklearn.naive_bayes import GaussianNB
+# Create Gaussian Naive Bayes model
+MyGNB = GaussianNB()
+# Fit the model on the training data
+MyGNB_Model = MyGNB.fit(Training_G, Training_G_Label)
+
+# Predict the Testing Data using the model
+Predictions_G = MyGNB_Model.predict(Testing_G)
+print(Predictions_G[:5])
+
+disjoint_check = pd.merge(Training_G, Testing_G, how='inner')
+# Check Train and Test sets are disjoint
+if not disjoint_check.empty:
+    print("Train and Test set have same rows")
+else:
+    print("Train and Test set have not same rows")
+
+# Plot confusion matrix
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+# Create confusion matrix
+cm = confusion_matrix(Testing_G_Label, Predictions_G, labels=MyGNB_Model.classes_)
+# Plotting the confusion matrix
+plt.figure(figsize=(10, 8))
+
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=MyGNB_Model.classes_,
+            yticklabels=MyGNB_Model.classes_)
+plt.title('Confusion Matrix for Gaussian Naive Bayes Model')
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.show()
+
+from sklearn.metrics import accuracy_score
+
+# Calculate accuracy
+accuracy = accuracy_score(Testing_G_Label, Predictions_G)
+print(f"Accuracy: {accuracy:.2f}")
+
+# Plot accuracy as a bar chart
+plt.figure(figsize=(6, 4))
+plt.bar(['Accuracy'], [accuracy], color='skyblue')
+plt.ylim(0, 1)
+plt.title('Accuracy of Gaussian Naive Bayes Model')
+plt.ylabel('Accuracy')
+plt.text(0, accuracy + 0.02, f'{accuracy:.2f}', ha='center', fontsize=12)
+plt.show()
+
+
+## Multinomial NB
+mn_df = df_filtered.copy()
+print(mn_df)
+
+# Discretization
+from sklearn.preprocessing import KBinsDiscretizer
+# Create the discretizer
+disc = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
+# Fit the discretizer to the data
+disc.fit(mn_df[['Nightly_Rate', 'Arrival_Rate', 'Advance_Purchase']])
+# Transform the data
+mn_df[['Nightly_Rate', 'Arrival_Rate', 'Advance_Purchase']] = disc.transform(mn_df[['Nightly_Rate', 'Arrival_Rate', 'Advance_Purchase']])
+print(mn_df.head())
+
+# Train test splitting
+Training_MN, Testing_MN = train_test_split(mn_df, test_size=.2)
+##  Save the Labels and then remove them from the Training and Testing data
+Training_MN_Label = Training_MN["Purchased_Room_Type"]
+Training_MN=Training_MN.drop(["Purchased_Room_Type"], axis=1)
+Testing_MN_Label = Testing_MN["Purchased_Room_Type"]
+Testing_MN=Testing_MN.drop(["Purchased_Room_Type"], axis=1)
+
+print(Testing_MN.head(3))
+
+from sklearn.naive_bayes import MultinomialNB
+
+MyMN = MultinomialNB()
+print(Training_MN.head(3))
+print(Training_MN_Label.head(3))
+
+Training_MN.to_csv("Training_MN.csv", index=False)
+Testing_MN.to_csv("Testing_MN.csv", index=False)
+
+
+## Traing the model
+My_MN_Model = MyMN.fit(Training_MN, Training_MN_Label)
+print(My_MN_Model)
+print(My_MN_Model.classes_)
+
+## Predict the Testing Data using the model
+Predictions_MN=My_MN_Model.predict(Testing_MN)
+print(Predictions_MN)
+
+## Print the actual probabilities
+print("\n\nThe Multinomial NB Model Prediction Probabilities are:")
+print(My_MN_Model.predict_proba(Testing_MN).round(3))
+
+# Plot confusion matrix
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+# Create confusion matrix
+cm = confusion_matrix(Testing_MN_Label, Predictions_MN, labels=My_MN_Model.classes_)
+# Plotting the confusion matrix
+plt.figure(figsize=(10, 8))
+
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=My_MN_Model.classes_,
+            yticklabels=My_MN_Model.classes_)
+
+plt.title('Confusion Matrix for Multinomial Naive Bayes Model')
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.show()
+
+from sklearn.metrics import accuracy_score
+
+# Calculate accuracy
+accuracy = accuracy_score(Testing_MN_Label, Predictions_MN)
+print(f"Accuracy: {accuracy:.2f}")
+
+# Plot accuracy as a bar chart
+plt.figure(figsize=(6, 4))
+plt.bar(['Accuracy'], [accuracy], color='skyblue')
+plt.ylim(0, 1)
+plt.title('Accuracy of Multinomial Naive Bayes Model')
+plt.ylabel('Accuracy')
+plt.text(0, accuracy + 0.02, f'{accuracy:.2f}', ha='center', fontsize=12)
+plt.show()
+
+
+# Categorical NB
+cat_df = mn_df.copy()
+Training_C, Testing_C = train_test_split(cat_df, test_size=.2)
+
+Training_C_Label = Training_C["Purchased_Room_Type"]
+Training_C=Training_C.drop(["Purchased_Room_Type"], axis=1)
+Testing_C_Label = Testing_C["Purchased_Room_Type"]
+Testing_C=Testing_C.drop(["Purchased_Room_Type"], axis=1)
+
+print(Testing_C.head(3))
+
+Training_C.to_csv("Training_C.csv", index=False)
+Testing_C.to_csv("Testing_C.csv", index=False)
+
+from sklearn.naive_bayes import CategoricalNB
+
+MyCNB = CategoricalNB()
+
+# Fit the model
+My_CNB_Model = MyCNB.fit(Training_C, Training_C_Label)
+
+# Predict the Testing Data using the model
+Predictions_C=My_CNB_Model.predict(Testing_C)
+print("First 5 predicted values: ", Predictions_C[:5])
+
+# Print the actual probabilities
+print("\nThe Categorical NB Model Prediction Probabilities are:")
+print(My_CNB_Model.predict_proba(Testing_C).round(3))
+
+# Plot confusion matrix
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+# Create confusion matrix
+cm = confusion_matrix(Testing_C_Label, Predictions_C, labels=My_CNB_Model.classes_)
+# Plotting the confusion matrix
+plt.figure(figsize=(10, 8))
+
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=My_CNB_Model.classes_,
+            yticklabels=My_CNB_Model.classes_)
+plt.title('Confusion Matrix for Categorical Naive Bayes Model')
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.show()
+
+# Calculate accuracy
+accuracy = accuracy_score(Testing_C_Label, Predictions_C)
+print(f"Accuracy: {accuracy:.2f}")
+
+# Plot accuracy as a bar chart
+plt.figure(figsize=(6, 4))
+plt.bar(['Accuracy'], [accuracy], color='skyblue')
+plt.ylim(0, 1)
+plt.title('Accuracy of Multinomial Naive Bayes Model')
+plt.ylabel('Accuracy')
+plt.text(0, accuracy + 0.02, f'{accuracy:.2f}', ha='center', fontsize=12)
+plt.show()
+
+# Evaluation
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support, roc_auc_score, classification_report, confusion_matrix
+import numpy as np
+
+def evaluate_multiclass_model(y_true, y_pred, y_proba, average='weighted'):
+    """
+    Evaluate a multi-class classification model with imbalanced data.
+    
+    Parameters:
+    - y_true : array-like, true class labels
+    - y_pred : array-like, predicted class labels
+    - y_proba: array-like, predicted probability for each class
+    - average: str, averaging method for multi-class metrics ('macro', 'micro', 'weighted')
+
+    Returns:
+    - A dictionary containing accuracy, precision, recall, F1-score, ROC-AUC, and PR-AUC scores.
+    """
+    metrics = {}
+
+    # Accuracy
+    metrics["Accuracy"] = accuracy_score(y_true, y_pred)
+
+    # Precision, Recall, F1-Score
+    precision, recall, f1, _ = precision_recall_fscore_support(y_true, y_pred, average=average)
+    metrics["Precision"] = precision
+    metrics["Recall"] = recall
+    metrics["F1-Score"] = f1
+
+    # ROC-AUC Score (only works if y_proba is available)
+    try:
+        metrics["ROC-AUC"] = roc_auc_score(y_true, y_proba, multi_class="ovr", average=average)
+    except:
+        metrics["ROC-AUC"] = "N/A (Check y_proba format)"
+
+    # Print classification report
+    print("Classification Report:\n", classification_report(y_true, y_pred))
+
+    # Confusion Matrix
+    cm = confusion_matrix(y_true, y_pred)
+    print("Confusion Matrix:\n", cm)
+
+    return metrics
+
+
+# Gaussian Naive Bayes Evaluation
+g_results = evaluate_multiclass_model(Testing_G_Label, Predictions_G, MyGNB_Model.predict_proba(Testing_G))
+print(g_results)
+
+# Categorical Naive Bayes Evaluation
+c_results = evaluate_multiclass_model(Testing_C_Label, Predictions_C, MyCNB.predict_proba(Testing_C))
+print(c_results)
+
+
+# Multinomial NB model evaluation
+mn_results = evaluate_multiclass_model(
+    y_true=Testing_MN_Label,
+    y_pred=Predictions_MN,
+    y_proba=My_MN_Model.predict_proba(Testing_MN),
+    average='weighted'
+)
+print(mn_results)
