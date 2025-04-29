@@ -1,0 +1,148 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr 28 18:39:10 2025
+
+@author: Martian
+"""
+import pandas as pd
+import sklearn
+import re  
+import matplotlib.pyplot as plt
+import string
+import numpy as np
+from sklearn.metrics import confusion_matrix
+
+from sklearn.model_selection import train_test_split
+#https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html#sklearn.svm.LinearSVC
+from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
+
+## Read the data into a dataframe
+filename="D:/OM_PhD_CUBoulder/Classes/25S_MachineLearning/SVM/Web/Cleaned_Hotel_Data.csv"
+DF=pd.read_csv(filename)
+print(DF.head())
+print(DF.columns)
+SVM_DF = DF[['Booking_ID', 'Distribution_Channel', 'Advance_Purchase', 'Nightly_Rate','Purchased_Room_Type']]
+SVM_DF = SVM_DF.groupby('Booking_ID').sample(n=1, random_state=42)
+print(SVM_DF)
+#from sklearn.model_selection import train_test_split
+TrainDF, TestDF = train_test_split(SVM_DF, test_size=0.3)
+# Now we have a training set and a testing set. 
+print("\nThe training set is:")
+print(TrainDF)
+print("\nThe testing set is:")
+print(TestDF)
+
+## IMPORTANT - YOU CANNOT LEAVE LABELS ON THE TEST SET
+## Save labels
+TestLabels=TestDF["Purchased_Room_Type"]
+print(TestLabels)
+## remove labels
+TestDF = TestDF.drop(["Purchased_Room_Type"], axis=1)
+#print(TestDF)
+
+## Set up the training data so the models get what they expect
+TrainDF_nolabels=TrainDF.drop(["Purchased_Room_Type"], axis=1)
+print(TrainDF_nolabels)
+TrainLabels=TrainDF["Purchased_Room_Type"]
+print(TrainLabels)
+
+#------------------------
+## Some models do not run on qualitative data.....
+## So, we will need to remove the variables: Gender and State
+
+TrainDF_nolabels_quant=TrainDF_nolabels.drop(["Distribution_Channel"], axis=1)
+TestDF_quant=TestDF.drop(["Distribution_Channel"], axis=1)
+print(TestDF_quant)
+#------------------------------
+
+
+#############################################
+###########  SVM ############################
+#############################################
+
+#from sklearn.svm import LinearSVC
+### NOTE - We CANNOT use SVM directly on the data. 
+### SVMs do not run on qualitative data.
+
+SVM_Model1=LinearSVC(C=.001)
+
+SVM_Model1.fit(TrainDF_nolabels_quant, TrainLabels)
+
+print("SVM 1 prediction:\n", SVM_Model1.predict(TestDF_quant))
+print("Actual:")
+print(TestLabels)
+
+SVM_matrix = confusion_matrix(TestLabels, SVM_Model1.predict(TestDF_quant))
+print("\nThe confusion matrix for Linear SVM is:")
+print(SVM_matrix)
+print("\n\n")
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, accuracy_score
+
+# Plot the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(SVM_matrix, annot=True, fmt='d', cmap='Blues',
+            xticklabels=np.unique(TrainLabels),
+            yticklabels=np.unique(TrainLabels))
+plt.title('Confusion Matrix for Linear SVM', fontsize=16)
+plt.xlabel('Predicted Labels', fontsize=14)
+plt.ylabel('True Labels', fontsize=14)
+plt.show()
+
+# Calculate and print accuracy
+accuracy = accuracy_score(TestLabels, SVM_Model1.predict(TestDF_quant))
+print(f"Accuracy: {accuracy:.2%}")
+
+## RBF
+SVM_Model2=SVC(C=1, kernel='rbf', degree=3, gamma="auto")
+SVM_Model2.fit(TrainDF_nolabels_quant, TrainLabels)
+
+print("SVM prediction:\n", SVM_Model2.predict(TestDF_quant))
+print("Actual:")
+print(TestLabels)
+
+SVM_matrix = confusion_matrix(TestLabels, SVM_Model2.predict(TestDF_quant))
+print("\nThe confusion matrix for rbf SVM is:")
+print(SVM_matrix)
+print("\n\n")
+
+# Plot the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(SVM_matrix, annot=True, fmt='d', cmap='Blues',
+            xticklabels=np.unique(TrainLabels),
+            yticklabels=np.unique(TrainLabels))
+plt.title('Confusion Matrix for RBF SVM', fontsize=16)
+plt.xlabel('Predicted Labels', fontsize=14)
+plt.ylabel('True Labels', fontsize=14)
+plt.show()
+# Calculate and print accuracy
+accuracy = accuracy_score(TestLabels, SVM_Model2.predict(TestDF_quant))
+print(f"Accuracy: {accuracy:.2%}")
+
+## POLY
+SVM_Model3=SVC(C=2, kernel='poly', degree=2, gamma="auto")
+SVM_Model3.fit(TrainDF_nolabels_quant, TrainLabels)
+
+print("SVM prediction:\n", SVM_Model3.predict(TestDF_quant))
+print("Actual:")
+print(TestLabels)
+
+SVM_matrix = confusion_matrix(TestLabels, SVM_Model3.predict(TestDF_quant))
+print("\nThe confusion matrix for poly SVM is:")
+print(SVM_matrix)
+print("\n\n")
+# Plot the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(SVM_matrix, annot=True, fmt='d', cmap='Blues',
+            xticklabels=np.unique(TrainLabels),
+            yticklabels=np.unique(TrainLabels))
+plt.title('Confusion Matrix for Poly SVM', fontsize=16)
+plt.xlabel('Predicted Labels', fontsize=14)
+plt.ylabel('True Labels', fontsize=14)
+plt.show()
+# Calculate and print accuracy
+accuracy = accuracy_score(TestLabels, SVM_Model3.predict(TestDF_quant))
+print(f"Accuracy: {accuracy:.2%}")
