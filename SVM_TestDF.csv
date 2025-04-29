@@ -1,0 +1,389 @@
+Booking_ID,Distribution_Channel,Advance_Purchase,Nightly_Rate,Purchased_Room_Type
+593,CRO/Hotel,0,569.0,Suite
+591,WEB,24,299.0,Special Type Room
+1714,CRO/Hotel,12,279.0,King Room
+538,CRO/Hotel,43,399.0,King Room
+174,WEB,2,329.0,Special Type Room
+1319,CRO/Hotel,14,399.0,Special Type Room
+741,CRO/Hotel,36,359.0,King Room
+1429,CRO/Hotel,8,359.0,Special Type Room
+2096,CRO/Hotel,3,369.0,Special Type Room
+109,CRO/Hotel,11,429.0,King Room
+1598,GDS,9,269.0,Queen Room
+541,WEB,37,324.0,Special Type Room
+2066,GDS,11,259.0,Special Type Room
+964,CRO/Hotel,5,439.0,King Room
+2034,CRO/Hotel,12,299.0,Special Type Room
+1628,WEB,6,299.0,King Room
+111,CRO/Hotel,15,299.0,King Room
+1148,WEB,1,269.0,Special Type Room
+1409,CRO/Hotel,1,379.0,King Room
+649,CRO/Hotel,11,249.0,Suite
+1086,WEB,20,359.0,King Room
+187,GDS,3,329.0,Special Type Room
+1670,GDS,29,329.0,Queen Room
+1652,WEB,8,369.0,King Room
+2099,CRO/Hotel,2,399.0,King Room
+98,GDS,5,499.0,Suite
+1335,CRO/Hotel,1,379.0,Queen Room
+1199,CRO/Hotel,0,609.0,Suite
+1772,CRO/Hotel,13,399.0,Special Type Room
+1224,CRO/Hotel,6,429.0,Queen Room
+1000,WEB,8,429.0,Queen Room
+692,CRO/Hotel,23,269.0,Special Type Room
+105,CRO/Hotel,11,429.0,King Room
+2056,CRO/Hotel,2,429.0,Special Type Room
+1032,WEB,1,399.0,Queen Room
+1939,CRO/Hotel,2,339.0,King Room
+1586,GDS,21,382.33,King Room
+2075,CRO/Hotel,5,409.0,Special Type Room
+91,GDS,1,439.0,King Room
+1771,WEB,10,399.0,King Room
+1213,CRO/Hotel,20,329.0,King Room
+1234,CRO/Hotel,1,499.0,King Room
+1411,WEB,6,429.0,Special Type Room
+1943,WEB,14,329.0,Special Type Room
+441,WEB,27,315.0,King Room
+1298,CRO/Hotel,0,499.0,King Room
+1690,CRO/Hotel,21,359.0,Special Type Room
+1654,CRO/Hotel,18,279.0,King Room
+1163,WEB,2,269.0,King Room
+2101,GDS,3,361.5,King Room
+1572,GDS,0,489.0,King Room
+1364,GDS,7,299.0,Special Type Room
+1377,WEB,13,399.0,Queen Room
+181,CRO/Hotel,27,399.0,King Room
+1716,CRO/Hotel,11,549.0,King Room
+2001,WEB,6,319.0,Special Type Room
+1922,CRO/Hotel,1,329.0,Suite
+1852,WEB,40,299.0,King Room
+565,CRO/Hotel,6,319.0,King Room
+1216,WEB,40,329.0,King Room
+1549,CRO/Hotel,25,289.0,Special Type Room
+718,CRO/Hotel,16,351.0,King Room
+2019,CRO/Hotel,9,429.0,King Room
+633,WEB,28,387.0,King Room
+1651,CRO/Hotel,8,409.0,King Room
+2162,CRO/Hotel,5,289.0,King Room
+175,CRO/Hotel,0,289.0,Special Type Room
+1356,CRO/Hotel,12,429.0,King Room
+1452,CRO/Hotel,1,489.0,King Room
+699,CRO/Hotel,8,299.0,Special Type Room
+1693,GDS,14,363.0,King Room
+2011,CRO/Hotel,3,369.0,Suite
+1090,WEB,18,429.0,King Room
+1211,GDS,4,299.0,King Room
+2184,WEB,6,292.33,King Room
+1776,GDS,21,360.0,Special Type Room
+151,GDS,6,439.0,King Room
+955,CRO/Hotel,10,399.0,King Room
+1963,CRO/Hotel,1,462.0,Suite
+2211,CRO/Hotel,28,259.0,King Room
+877,CRO/Hotel,8,399.0,King Room
+139,WEB,4,279.0,King Room
+1680,GDS,6,389.0,King Room
+1725,WEB,36,216.0,King Room
+1210,GDS,4,269.0,King Room
+172,CRO/Hotel,0,329.0,Special Type Room
+2173,CRO/Hotel,9,359.0,King Room
+1109,CRO/Hotel,0,299.0,Queen Room
+1259,WEB,5,399.0,King Room
+1466,WEB,11,404.0,Queen Room
+1677,WEB,12,379.0,King Room
+768,GDS,30,349.0,King Room
+581,WEB,7,439.0,King Room
+1506,CRO/Hotel,4,369.0,King Room
+126,GDS,8,399.0,King Room
+1969,WEB,35,339.0,Special Type Room
+654,CRO/Hotel,18,329.0,King Room
+2135,WEB,1,369.0,Special Type Room
+1274,CRO/Hotel,3,499.0,King Room
+753,CRO/Hotel,27,379.0,King Room
+381,WEB,40,369.0,King Room
+1639,GDS,13,269.0,King Room
+1480,CRO/Hotel,6,469.0,King Room
+374,CRO/Hotel,41,529.0,Suite
+1353,GDS,14,399.0,Special Type Room
+1589,CRO/Hotel,26,429.0,Suite
+2013,CRO/Hotel,4,349.0,King Room
+879,WEB,5,409.0,King Room
+171,CRO/Hotel,34,270.0,Special Type Room
+770,CRO/Hotel,37,429.0,King Room
+862,WEB,5,399.0,King Room
+1703,CRO/Hotel,11,449.0,Suite
+2078,GDS,1,259.0,Special Type Room
+1838,CRO/Hotel,12,359.0,Queen Room
+1903,CRO/Hotel,4,379.0,King Room
+1352,WEB,6,629.0,Suite
+2057,WEB,6,329.0,King Room
+2089,CRO/Hotel,11,459.0,King Room
+666,WEB,20,429.0,King Room
+780,GDS,31,404.0,King Room
+2151,CRO/Hotel,31,429.0,Suite
+2157,CRO/Hotel,14,289.0,King Room
+966,GDS,6,439.0,King Room
+1318,WEB,4,499.0,King Room
+1290,GDS,14,469.0,King Room
+636,GDS,13,429.0,King Room
+695,CRO/Hotel,16,429.0,King Room
+161,CRO/Hotel,0,299.0,Special Type Room
+1636,CRO/Hotel,29,297.0,King Room
+1774,GDS,14,279.0,Special Type Room
+775,CRO/Hotel,11,399.0,Queen Room
+1016,WEB,3,399.0,Special Type Room
+1278,CRO/Hotel,11,289.0,Special Type Room
+1284,CRO/Hotel,9,269.0,King Room
+1223,GDS,18,449.0,Special Type Room
+24,GDS,5,399.0,Special Type Room
+2171,CRO/Hotel,6,419.0,King Room
+1229,GDS,9,299.0,Special Type Room
+55,CRO/Hotel,9,299.0,King Room
+2045,CRO/Hotel,9,459.0,King Room
+691,CRO/Hotel,5,429.0,King Room
+640,CRO/Hotel,6,439.0,King Room
+1678,WEB,26,297.0,Special Type Room
+859,CRO/Hotel,0,319.0,King Room
+2039,CRO/Hotel,1,429.0,King Room
+2213,CRO/Hotel,22,449.0,King Room
+1101,CRO/Hotel,14,429.0,Special Type Room
+1929,CRO/Hotel,16,329.0,King Room
+1931,CRO/Hotel,31,329.0,Special Type Room
+1001,CRO/Hotel,10,299.0,King Room
+1486,WEB,0,449.0,Queen Room
+689,GDS,16,509.0,Special Type Room
+1647,WEB,22,297.0,Special Type Room
+643,CRO/Hotel,20,333.0,Suite
+1909,CRO/Hotel,31,339.0,Special Type Room
+1432,CRO/Hotel,3,289.0,King Room
+684,CRO/Hotel,0,499.0,Suite
+1349,CRO/Hotel,0,379.0,Queen Room
+660,CRO/Hotel,14,429.0,King Room
+1351,CRO/Hotel,0,379.0,Suite
+1641,GDS,3,329.0,King Room
+110,CRO/Hotel,13,429.0,Special Type Room
+628,WEB,4,399.0,King Room
+566,CRO/Hotel,6,399.0,Queen Room
+1855,WEB,11,289.0,Special Type Room
+573,WEB,22,405.0,King Room
+1133,CRO/Hotel,7,399.0,King Room
+96,GDS,6,439.0,King Room
+1036,CRO/Hotel,0,337.0,Suite
+1025,CRO/Hotel,0,299.0,Suite
+701,GDS,29,349.0,King Room
+1737,WEB,27,324.0,Special Type Room
+1775,GDS,11,399.0,Special Type Room
+301,CRO/Hotel,8,429.0,King Room
+1812,WEB,40,329.0,King Room
+1940,CRO/Hotel,7,289.0,King Room
+2042,CRO/Hotel,1,269.0,King Room
+1465,GDS,11,404.0,King Room
+600,GDS,1,419.0,King Room
+92,CRO/Hotel,13,429.0,King Room
+891,WEB,3,299.0,Special Type Room
+2093,CRO/Hotel,5,439.0,King Room
+1022,CRO/Hotel,0,309.0,King Room
+2168,CRO/Hotel,5,259.0,King Room
+101,WEB,30,315.0,Special Type Room
+583,CRO/Hotel,7,399.0,Suite
+2193,CRO/Hotel,36,329.0,King Room
+1169,GDS,3,399.0,Special Type Room
+1360,GDS,11,399.0,Special Type Room
+2119,CRO/Hotel,18,329.0,Suite
+959,CRO/Hotel,3,339.0,King Room
+1098,GDS,7,399.0,Special Type Room
+112,GDS,9,399.0,King Room
+928,CRO/Hotel,2,499.0,Suite
+2043,CRO/Hotel,4,459.0,King Room
+1477,CRO/Hotel,0,399.0,Suite
+1733,GDS,13,399.0,Special Type Room
+1520,GDS,4,439.0,Special Type Room
+2207,CRO/Hotel,10,339.0,King Room
+1695,WEB,30,297.0,King Room
+2206,WEB,10,269.0,King Room
+1483,GDS,3,429.0,Special Type Room
+1958,CRO/Hotel,4,339.0,Queen Room
+1836,CRO/Hotel,27,549.0,Suite
+141,GDS,5,399.0,Special Type Room
+1739,WEB,32,324.0,Special Type Room
+954,CRO/Hotel,1,349.0,Suite
+1014,GDS,0,299.0,King Room
+1782,GDS,36,360.0,King Room
+965,CRO/Hotel,6,399.0,King Room
+694,WEB,27,429.0,Queen Room
+2198,CRO/Hotel,16,289.0,King Room
+651,CRO/Hotel,2,489.0,Suite
+567,CRO/Hotel,1,469.0,King Room
+977,CRO/Hotel,7,259.0,Special Type Room
+1917,CRO/Hotel,37,359.0,King Room
+1268,GDS,0,429.0,King Room
+722,WEB,27,349.0,King Room
+1462,CRO/Hotel,10,404.0,Special Type Room
+1249,GDS,5,399.0,Special Type Room
+1225,CRO/Hotel,3,499.0,King Room
+1024,GDS,3,399.0,Special Type Room
+724,WEB,2,299.0,Special Type Room
+2199,CRO/Hotel,28,319.0,Special Type Room
+2137,CRO/Hotel,11,459.0,Special Type Room
+898,CRO/Hotel,7,299.0,King Room
+2221,WEB,13,399.0,Suite
+623,WEB,27,469.0,Suite
+1656,GDS,7,359.0,Special Type Room
+1807,WEB,15,399.0,King Room
+2146,WEB,16,289.0,King Room
+1110,CRO/Hotel,8,409.0,King Room
+1159,CRO/Hotel,0,269.0,King Room
+2038,WEB,0,459.0,King Room
+1757,CRO/Hotel,29,429.0,King Room
+311,WEB,29,449.0,King Room
+1194,CRO/Hotel,0,429.0,King Room
+1328,CRO/Hotel,13,399.0,Special Type Room
+759,CRO/Hotel,0,349.0,King Room
+624,WEB,3,299.0,King Room
+1908,CRO/Hotel,6,429.0,King Room
+1035,CRO/Hotel,0,337.0,Suite
+1778,CRO/Hotel,14,269.0,King Room
+1336,GDS,1,499.0,King Room
+1061,CRO/Hotel,9,404.0,King Room
+873,CRO/Hotel,7,399.0,Queen Room
+1747,WEB,20,399.0,King Room
+1286,CRO/Hotel,18,299.0,King Room
+590,WEB,8,309.0,Special Type Room
+992,CRO/Hotel,0,259.0,Suite
+606,GDS,1,389.0,Special Type Room
+1397,WEB,11,379.0,Queen Room
+10,WEB,0,359.0,King Room
+2205,CRO/Hotel,15,309.0,Special Type Room
+1655,GDS,29,329.0,Queen Room
+32,WEB,1,499.0,Suite
+646,WEB,5,399.0,Special Type Room
+1803,WEB,28,360.0,Suite
+38,CRO/Hotel,26,469.0,King Room
+1956,CRO/Hotel,32,539.0,Suite
+1010,CRO/Hotel,0,259.0,Special Type Room
+2194,WEB,27,289.0,King Room
+1118,WEB,2,299.0,Special Type Room
+1749,CRO/Hotel,33,243.0,King Room
+1798,WEB,22,243.0,King Room
+1260,GDS,5,399.0,King Room
+734,CRO/Hotel,18,299.0,King Room
+1041,WEB,2,319.0,King Room
+1079,GDS,1,399.0,King Room
+1337,CRO/Hotel,14,429.0,Suite
+880,CRO/Hotel,1,399.0,Special Type Room
+155,GDS,8,399.0,King Room
+1920,CRO/Hotel,0,649.0,Suite
+715,GDS,23,270.0,Special Type Room
+94,GDS,6,439.0,King Room
+1468,GDS,11,404.0,Special Type Room
+2234,GDS,20,359.0,Special Type Room
+204,CRO/Hotel,27,399.0,King Room
+761,CRO/Hotel,25,315.0,King Room
+882,CRO/Hotel,6,439.0,King Room
+2143,CRO/Hotel,15,369.0,King Room
+555,CRO/Hotel,30,529.0,Suite
+1561,CRO/Hotel,1,499.0,Suite
+2204,GDS,17,239.0,King Room
+76,CRO/Hotel,15,299.0,King Room
+1735,GDS,16,399.0,Special Type Room
+2060,WEB,0,259.0,Special Type Room
+1741,WEB,12,399.0,King Room
+1624,CRO/Hotel,19,299.0,King Room
+967,GDS,4,319.0,Special Type Room
+1473,CRO/Hotel,1,399.0,Suite
+756,CRO/Hotel,33,359.0,King Room
+128,GDS,2,399.0,Special Type Room
+2109,CRO/Hotel,11,459.0,King Room
+764,CRO/Hotel,35,329.0,King Room
+1536,WEB,10,369.0,King Room
+196,CRO/Hotel,27,399.0,King Room
+1819,CRO/Hotel,35,389.0,Queen Room
+2232,CRO/Hotel,22,309.0,King Room
+2123,CRO/Hotel,19,289.0,King Room
+1591,WEB,17,379.0,King Room
+878,CRO/Hotel,7,299.0,King Room
+1787,GDS,11,399.0,King Room
+1433,CRO/Hotel,26,469.0,King Room
+558,CRO/Hotel,14,629.0,Suite
+1484,WEB,19,369.0,King Room
+1174,WEB,8,299.0,King Room
+1522,GDS,12,469.0,King Room
+1187,CRO/Hotel,0,299.0,Special Type Room
+1824,CRO/Hotel,37,269.0,King Room
+890,CRO/Hotel,4,479.0,King Room
+854,CRO/Hotel,0,319.0,Queen Room
+579,CRO/Hotel,0,329.0,King Room
+1033,CRO/Hotel,0,379.0,King Room
+1424,CRO/Hotel,0,369.0,King Room
+1618,WEB,23,324.0,Special Type Room
+159,WEB,2,399.0,Queen Room
+289,CRO/Hotel,8,429.0,King Room
+2052,WEB,5,289.0,Special Type Room
+2160,CRO/Hotel,13,459.0,Special Type Room
+714,CRO/Hotel,33,225.0,Special Type Room
+1792,CRO/Hotel,39,159.0,King Room
+1007,CRO/Hotel,0,519.0,King Room
+1023,GDS,2,329.0,Special Type Room
+1495,GDS,25,469.0,King Room
+1796,GDS,22,261.0,Special Type Room
+2180,WEB,35,329.0,Queen Room
+1207,WEB,23,360.0,Special Type Room
+1344,GDS,2,499.0,King Room
+1555,GDS,26,449.0,Special Type Room
+537,CRO/Hotel,38,499.0,Suite
+1683,WEB,23,297.0,King Room
+163,CRO/Hotel,34,270.0,Special Type Room
+1759,WEB,27,329.0,Special Type Room
+1461,CRO/Hotel,34,359.0,King Room
+2073,WEB,12,329.0,Special Type Room
+681,WEB,18,469.0,King Room
+823,CRO/Hotel,51,299.0,Queen Room
+801,WEB,38,324.0,Special Type Room
+936,GDS,8,469.0,King Room
+994,CRO/Hotel,3,299.0,King Room
+1643,CRO/Hotel,27,349.0,Special Type Room
+1806,WEB,24,261.0,Special Type Room
+296,CRO/Hotel,0,369.0,King Room
+1993,CRO/Hotel,2,339.0,King Room
+193,GDS,3,329.0,Special Type Room
+1045,CRO/Hotel,5,429.0,King Room
+1084,CRO/Hotel,18,379.0,Special Type Room
+2161,WEB,3,569.0,Suite
+828,WEB,50,270.0,King Room
+1994,CRO/Hotel,40,409.0,Special Type Room
+909,CRO/Hotel,3,399.0,Special Type Room
+1227,GDS,18,449.0,Special Type Room
+1454,CRO/Hotel,0,299.0,King Room
+806,CRO/Hotel,49,324.0,Special Type Room
+1558,WEB,5,489.0,King Room
+1343,GDS,15,449.0,Special Type Room
+1531,CRO/Hotel,4,329.0,King Room
+1412,CRO/Hotel,11,429.0,Queen Room
+1878,CRO/Hotel,13,359.0,King Room
+938,CRO/Hotel,10,469.0,King Room
+1763,CRO/Hotel,18,399.0,Special Type Room
+2231,CRO/Hotel,27,399.0,King Room
+468,WEB,7,359.0,King Room
+1593,GDS,10,289.0,King Room
+1236,CRO/Hotel,13,379.0,King Room
+1470,GDS,3,429.0,Special Type Room
+120,WEB,3,399.0,Queen Room
+62,CRO/Hotel,26,469.0,King Room
+143,WEB,4,279.0,Queen Room
+948,WEB,14,469.0,King Room
+650,WEB,6,399.0,Special Type Room
+1390,CRO/Hotel,1,339.0,King Room
+830,CRO/Hotel,53,270.0,King Room
+1837,WEB,2,329.0,Queen Room
+951,GDS,8,469.0,King Room
+1201,WEB,17,439.0,Queen Room
+597,GDS,1,419.0,King Room
+1745,WEB,14,269.0,King Room
+1668,GDS,7,289.0,Special Type Room
+1289,CRO/Hotel,4,379.0,King Room
+1293,CRO/Hotel,5,469.0,King Room
+1583,GDS,3,329.0,Special Type Room
+99,GDS,9,439.0,King Room
+1534,WEB,2,329.0,King Room
+1633,GDS,9,269.0,Queen Room
+946,CRO/Hotel,22,359.0,King Room
+1709,CRO/Hotel,10,359.0,King Room
