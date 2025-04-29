@@ -1,0 +1,114 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr 28 19:41:34 2025
+
+@author: Martian
+"""
+
+# --- Imports ---
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+
+# --- Load and clean data ---
+filename = "D:/OM_PhD_CUBoulder/Classes/25S_MachineLearning/SVM/Web/Cleaned_Hotel_Data.csv"
+DF = pd.read_csv(filename)
+
+# --- Select relevant columns ---
+RF_DF = DF[['Booking_ID', 'Distribution_Channel', 'Advance_Purchase', 'Nightly_Rate', 'Purchased_Room_Type']]
+RF_DF = RF_DF.groupby('Booking_ID').sample(n=1, random_state=42)
+
+# --- Encode categorical variable(s) ---
+encoder = LabelEncoder()
+RF_DF['Distribution_Channel'] = encoder.fit_transform(RF_DF['Distribution_Channel'])
+
+# --- Separate features and labels ---
+X = RF_DF.drop(["Purchased_Room_Type", "Booking_ID"], axis=1)  # Features  # Features
+y = RF_DF["Purchased_Room_Type"]               # Target variable
+
+# --- Split into training and testing sets ---
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# --- Print the training and testing sets ---
+print("\nThe training set is:")
+print(X_train)
+print("\nThe testing set is:")
+print(X_test)
+
+# --- Train Random Forest Classifier ---
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+# --- Make predictions ---
+y_pred = rf_model.predict(X_test)
+
+# --- Evaluation ---
+print("\nAccuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+# --- Confusion Matrix ---
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, cmap="Blues", fmt="d",
+            xticklabels=rf_model.classes_,
+            yticklabels=rf_model.classes_)
+plt.title("Confusion Matrix for Random Forest")
+plt.xlabel("Predicted")
+plt.ylabel("True")
+plt.tight_layout()
+plt.show()
+
+# Calculate and print accuracy
+# --- Accuracy Metrics ---
+accuracy = accuracy_score(y_test, y_pred)
+error = 1 - accuracy
+print(f"\nCalculated Accuracy: {accuracy:.4f} ({accuracy:.2%})")
+
+
+# --- Visualize Accuracy ---
+plt.figure(figsize=(5, 4))
+bars = plt.bar(['Accuracy', 'Error'], [accuracy, error], color=['green', 'red'])
+
+# Add percentage text on top of each bar
+for bar in bars:
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width() / 2,
+             height + 0.02,
+             f"{height:.2%}",
+             ha='center', va='bottom', fontsize=11, color='black')
+
+plt.title('Model Accuracy on Test Set')
+plt.ylabel('Proportion')
+plt.ylim(0, 1.1)  # Leave some space for labels above the bars
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
+
+
+#enerate Classification Report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Imports
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+import matplotlib.pyplot as plt
+
+# Train the decision tree (example using Gini index)
+dt_model = DecisionTreeClassifier(criterion="gini", max_depth=3, random_state=42)
+dt_model.fit(X_train, y_train)
+
+# Plot the decision tree
+plt.figure(figsize=(20, 10))  # Bigger figure for clearer visualization
+plot_tree(dt_model, 
+          feature_names=X_train.columns, 
+          class_names=dt_model.classes_, 
+          filled=True, 
+          rounded=True,
+          fontsize=11)
+
+plt.title("Decision Tree Visualization", fontsize=16)
+plt.show()
