@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import string
 import numpy as np
 from sklearn.metrics import confusion_matrix
-
+from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 #https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html#sklearn.svm.LinearSVC
 from sklearn.svm import LinearSVC
@@ -25,6 +25,11 @@ print(DF.columns)
 SVM_DF = DF[['Booking_ID', 'Distribution_Channel', 'Advance_Purchase', 'Nightly_Rate','Purchased_Room_Type']]
 SVM_DF = SVM_DF.groupby('Booking_ID').sample(n=1, random_state=42)
 print(SVM_DF)
+# --- Encode categorical variable(s) ---
+encoder = LabelEncoder()
+SVM_DF['Distribution_Channel'] = encoder.fit_transform(SVM_DF['Distribution_Channel'])
+SVM_DF = SVM_DF.drop(["Booking_ID"], axis=1)
+SVM_DF.to_csv("SVM_DF.csv", index=False)
 #from sklearn.model_selection import train_test_split
 TrainDF, TestDF = train_test_split(SVM_DF, test_size=0.3)
 # Now we have a training set and a testing set. 
@@ -32,6 +37,8 @@ print("\nThe training set is:")
 print(TrainDF)
 print("\nThe testing set is:")
 print(TestDF)
+TrainDF.to_csv("SVM_TrainDF.csv", index=False)
+TestDF.to_csv("SVM_TestDF.csv", index=False)
 
 ## IMPORTANT - YOU CANNOT LEAVE LABELS ON THE TEST SET
 ## Save labels
@@ -123,7 +130,7 @@ accuracy = accuracy_score(TestLabels, SVM_Model2.predict(TestDF_quant))
 print(f"Accuracy: {accuracy:.2%}")
 
 ## POLY
-SVM_Model3=SVC(C=2, kernel='poly', degree=2, gamma="auto")
+SVM_Model3=SVC(C=0.5, kernel='poly', degree=2, gamma="auto")
 SVM_Model3.fit(TrainDF_nolabels_quant, TrainLabels)
 
 print("SVM prediction:\n", SVM_Model3.predict(TestDF_quant))
@@ -146,3 +153,208 @@ plt.show()
 # Calculate and print accuracy
 accuracy = accuracy_score(TestLabels, SVM_Model3.predict(TestDF_quant))
 print(f"Accuracy: {accuracy:.2%}")
+#==========================================
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from sklearn.svm import SVC, LinearSVC
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+from sklearn.preprocessing import LabelEncoder
+
+# Data Preparation
+SVM_DF = DF[['Distribution_Channel', 'Advance_Purchase', 'Nightly_Rate', 'Purchased_Room_Type']]
+SVM_DF = SVM_DF.dropna()
+
+# Encode categorical columns
+le_channel = LabelEncoder()
+SVM_DF['Distribution_Channel'] = le_channel.fit_transform(SVM_DF['Distribution_Channel'])
+
+le_label = LabelEncoder()
+SVM_DF['Purchased_Room_Type'] = le_label.fit_transform(SVM_DF['Purchased_Room_Type'])
+
+X = SVM_DF.drop('Purchased_Room_Type', axis=1)
+y = SVM_DF['Purchased_Room_Type']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Kernels and C values to test
+kernels = ['linear', 'rbf', 'poly']
+C_values = [0.1, 1, 10]
+
+# Store results
+results = []
+
+for kernel in kernels:
+    for C in C_values:
+        print(f"\nKernel: {kernel}, C: {C}")
+        if kernel == 'linear':
+            model = LinearSVC(C=C, max_iter=10000)
+        else:
+            model = SVC(kernel=kernel, C=C, degree=2 if kernel == 'poly' else 3, gamma='auto')
+
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+
+        acc = accuracy_score(y_test, y_pred)
+        cm = confusion_matrix(y_test, y_pred)
+
+        print(f"Accuracy: {acc:.2%}")
+        print("Classification Report:\n", classification_report(y_test, y_pred))
+
+        # Save results for later comparison
+        results.append((kernel, C, acc))
+
+        # Plot confusion matrix
+        plt.figure(figsize=(6, 5))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                    xticklabels=le_label.classes_, 
+                    yticklabels=le_label.classes_)
+        plt.title(f'Confusion Matrix ({kernel} kernel, C={C})')
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+        plt.tight_layout()
+        plt.show()
+
+# Visualize accuracy comparison
+result_df = pd.DataFrame(results, columns=['Kernel', 'C', 'Accuracy'])
+plt.figure(figsize=(10, 6))
+sns.barplot(data=result_df, x='C', y='Accuracy', hue='Kernel')
+plt.title('Accuracy by Kernel and C Value')
+plt.ylabel('Accuracy')
+plt.ylim(0, 1)
+plt.show()
+
+#plot with percentage
+import matplotlib.pyplot as plt
+
+# Example accuracy values for each kernel and C value
+accuracies = {
+    "Linear": [0.5671, 0.5671, 0.2567],
+    "RBF": [0.6350, 0.8189, 0.8395],
+    "Poly": [0.5703, 0.5788, 0.5764]
+}
+
+C_values = ['C=0.1', 'C=1', 'C=10']
+colors = {'Linear': 'skyblue', 'RBF': 'lightgreen', 'Poly': 'salmon'}
+
+# Bar chart setup
+x = range(len(C_values))
+width = 0.2
+
+plt.figure(figsize=(12, 6))
+
+for i, (kernel, acc_list) in enumerate(accuracies.items()):
+    offset = i * width - width  # shift bars to avoid overlap
+    bars = plt.bar(
+        [xi + offset for xi in x],
+        [a * 100 for a in acc_list],
+        width=width,
+        label=kernel,
+        color=colors[kernel]
+    )
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 1,
+            f'{height:.2f}%',
+            ha='center',
+            fontsize=9
+        )
+
+# Plot formatting
+plt.xticks(ticks=x, labels=C_values)
+plt.ylabel('Accuracy (%)')
+plt.title('Accuracy Comparison Across Kernels and C Values')
+plt.legend(title='Kernel Type')
+plt.ylim(0, 100)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+plt.tight_layout()
+plt.show()
+
+from sklearn.decomposition import PCA
+# Visualize decision boundary for rbf kernel with 3 C values
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X)
+X_train_pca, X_test_pca, y_train_pca, y_test_pca = train_test_split(X_pca, y, test_size=0.3, random_state=42)
+
+Cs_for_visual = [0.1, 1, 10]
+for C in Cs_for_visual:
+    model = SVC(kernel='rbf', C=C, gamma='auto')
+    model.fit(X_train_pca, y_train_pca)
+
+    # Create meshgrid
+    x_min, x_max = X_pca[:, 0].min() - 1, X_pca[:, 0].max() + 1
+    y_min, y_max = X_pca[:, 1].min() - 1, X_pca[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 300), np.linspace(y_min, y_max, 300))
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    plt.figure(figsize=(8, 6))
+    plt.contourf(xx, yy, Z, cmap='coolwarm', alpha=0.6)
+    scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='coolwarm', edgecolor='k', s=20)
+    plt.title(f"Decision Boundary (RBF Kernel, C={C})")
+    plt.xlabel("PCA Component 1")
+    plt.ylabel("PCA Component 2")
+    plt.legend(handles=scatter.legend_elements()[0], labels=le_label.classes_, title="Class")
+    plt.tight_layout()
+    plt.show()
+    
+    # Plotting the decision boundary
+plt.figure(figsize=(8, 6))
+plt.contourf(xx, yy, Z, cmap='coolwarm', alpha=0.6)
+scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='coolwarm', edgecolor='k', s=20)
+
+# Fixing the legend
+unique_classes = np.unique(y)
+handles = [plt.Line2D([0], [0], marker='o', color='w',
+                      markerfacecolor=plt.cm.coolwarm(i / len(unique_classes)), 
+                      markeredgecolor='k', markersize=8) for i in range(len(unique_classes))]
+plt.legend(handles, le_label.classes_, title="Class")
+
+plt.title(f"Decision Boundary (RBF Kernel, C={C})")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.tight_layout()
+plt.show()
+
+## Visualize decision boundary for rbf kernel with 3 C values
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X)
+X_train_pca, X_test_pca, y_train_pca, y_test_pca = train_test_split(X_pca, y, test_size=0.3, random_state=42)
+
+Cs_for_visual = [0.1, 1, 10]
+for C in Cs_for_visual:
+    model = SVC(kernel='rbf', C=C, gamma='auto')
+    model.fit(X_train_pca, y_train_pca)
+
+    # Create meshgrid
+    x_min, x_max = X_pca[:, 0].min() - 1, X_pca[:, 0].max() + 1
+    y_min, y_max = X_pca[:, 1].min() - 1, X_pca[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 300), np.linspace(y_min, y_max, 300))
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    plt.figure(figsize=(8, 6))
+    plt.contourf(xx, yy, Z, cmap='coolwarm', alpha=0.6)
+    contour = plt.contour(xx, yy, Z, colors='k', linewidths=0.5)
+    scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='coolwarm', edgecolor='k', s=20)
+
+    # Create custom legend
+    unique_classes = np.unique(y)
+    handles = [plt.Line2D([0], [0], marker='o', color='w',
+                          markerfacecolor=plt.cm.coolwarm(i / len(unique_classes)),
+                          markeredgecolor='k', markersize=8) for i in range(len(unique_classes))]
+    plt.legend(handles, le_label.classes_, title="Class")
+
+    plt.title(f"Decision Boundary (RBF Kernel, C={C})")
+    plt.xlabel("PCA Component 1")
+    plt.ylabel("PCA Component 2")
+    plt.tight_layout()
+    plt.show()
+
+
